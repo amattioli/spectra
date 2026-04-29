@@ -46,12 +46,14 @@ def save_as(wavelength, flux, file_name):
     
     
     
-def simple_plot(wavelength, flux, title):
-    plt.figure(figsize=(12,5))
-    plt.plot(wavelength, flux, color="black", lw=1)
+def simple_plot(wavelength, flux, title = "", wl_range = (3700,6800), flux_range=(0.4,1.1)):
+    plt.figure(figsize=(12,6))
+    plt.plot(wavelength, flux, color="blue", lw=0.5)
 
-    plt.ylim(0.4, 1.1)
-    plt.xlim(3700,6800)
+    wlmin, wlmax = wl_range
+    ymin, ymax = flux_range
+    plt.ylim(ymin, ymax)
+    plt.xlim(wlmin,wlmax)
 
     plt.xlabel("Wavelength (Angstrom)")
     plt.ylabel("Flux")
@@ -59,6 +61,57 @@ def simple_plot(wavelength, flux, title):
 
     plt.grid(alpha=0.3)
     #plt.tight_layout()
+    plt.show()
+
+
+line_labels_colors = {
+    "A": "green",
+    "B": "darkorange",
+    "C": "red"
+}
+
+
+def plot_with_lines(wavelength, flux, spectral_lines, wl_range, flux_range=(0.45,1.2), title="", z = 0.0):
+    wlmin, wlmax = wl_range
+    ymin, ymax = flux_range
+    plt.figure(figsize=(12,6.5))
+    plt.plot(wavelength, flux, color="blue", lw=0.5)
+
+    fmin, fmax = np.min(flux), np.max(flux)
+    
+    plt.ylim(ymin, ymax)
+    plt.xlim(wlmin,wlmax)
+
+    #for name, lam_rest in spectral_lines.items():
+    for index, row in spectral_lines.iterrows():
+        name = row["name"]
+        lin_ident_class = row["class"]
+        lam_rest = row["wavelength"]
+        lam_obs = lam_rest * (1 + z)
+        
+        if (wlmin < lam_obs < wlmax) & (isinstance(name, str)):
+            #print(name, lam_rest, lin_ident_class)
+            lin_col = line_labels_colors[lin_ident_class]
+            plt.axvline(lam_obs, color=lin_col, alpha=0.4, lw=1, ls="--", ymax=0.73)
+            plt.text(
+                lam_obs,
+                ymin + (ymax-ymin) * 0.75,
+                name.replace('_', '\n'),
+                rotation=90,
+                verticalalignment="bottom",
+                horizontalalignment="center",
+                fontsize=9,
+                color=lin_col
+            )
+
+    #plt.ylim(0.45, 1.2)
+    #print(ymin, ymax)
+
+    plt.xlabel("Wavelength (Angstrom)")
+    plt.title(title)
+
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
     plt.show()
 
 

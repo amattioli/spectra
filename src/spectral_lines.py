@@ -8,6 +8,7 @@ from scipy.ndimage import median_filter
 from scipy.optimize import curve_fit
 from scipy.special import voigt_profile
 
+from collections import defaultdict
 from math import isnan
 
 
@@ -316,7 +317,7 @@ def fit_identified_line(wavelength, flux, continuum_env, identified_lines, name,
     win = win_size * fwhm_use
     left = lam_detected - win
     right = lam_detected + win
-    for other_name, _, _, other_lam_detected, _ in identified_lines:
+    for other_name, _, _, other_lam_detected, _, _ in identified_lines:
         if name != other_name:
             left, right = line_region_overlapping(wavelength, flux, lam_detected, left, right, other_lam_detected, win_size)
     mask = (wavelength > left) & (wavelength < right)
@@ -337,25 +338,172 @@ def fit_identified_line(wavelength, flux, continuum_env, identified_lines, name,
     delta_ew, delta_fwhm = mc_line_errors(wavelength, flux, peak_idx, mask, fwhm_use, model)
     
     return (mu, ew_nom, delta_ew, fwhm_nom, delta_fwhm)
+
+
+
+def multi_gaussian_model(x, offset, *params):
+    n = len(params) // 3
+    model = np.zeros_like(x)
+    for i in range(n):
+        amp, mu, sigma = params[3*i:3*i+3]
+        model += amp * np.exp(-0.5*((x-mu)/sigma)**2)
+    model += offset # params[-1] # continuum
+    return model
+
+
+
+def multi_gaussian_initial_guess(lines, wavelength, flux, continuum):
+    p0 = []
+    bounds_lo = []
+    bounds_hi = []
+    for name, model, lam_expected, lam_detected, z, group in lines:
+        lam0 = lam_expected
+        peak_index = np.argmin(np.abs(wavelength-lam0))
+        amp0 = flux[peak_index] - np.median(continuum)
+        fwhm_instr = lam0 / 850
+        sigma_instr = fwhm_instr / 2.355
+        
+        p0 += [amp0, lam0, sigma_instr]
+        bounds_lo += [-1.0, lam0 - 2.0, 0.5 * sigma_instr]
+        bounds_hi += [ 0.0, lam0 + 2.0, 3.0 * sigma_instr]
     
+    return (p0, bounds_lo, bounds_hi)
+
+
+
+def plot_multi_gauss_fit(w, f, cont, popt, gaus, name):
+    plt.figure(figsize=(6,4))
+    plt.plot(w, f, "k", label="Data")
+    plt.plot(w, cont, "g--", label="Continuum")
+    plt.plot(w, multi_gaussian_model(w, np.median(cont), *popt), "r", label="Multi Gaussian fit")
+    plt.plot(w, gaussian_model(w, *gaus), "y", label="Gaussian fit")
+    plt.legend()
+    plt.xlabel("Wavelength")
+    plt.title(name)
+    plt.show()
+
+
+
+def fit_blend_group(wavelength, flux, continuum_env, group_lines, plot=False):
+    _, _, _, lams_detected, _, _ = zip(*group_lines)
+    wl_min = min(lams_detected)
+    wl_max = max(lams_detected)
+    wl_min -= 2.5*(wl_max-wl_min)/2.0
+    wl_max += 2.5*(wl_max-wl_min)/2.0
     
+    mask = (wavelength > wl_min) & (wavelength < wl_max)
+    
+    w = wavelength[mask]
+    f = flux[mask]
+    continuum = continuum_env[mask]
+    offset = np.median(continuum)
+    
+    p0, bounds_lo, bounds_hi = multi_gaussian_initial_guess(group_lines, w, f, continuum)
+    
+    # print("Multi gaussian initial guess", p0)
+    
+    popt, _ = curve_fit(
+            lambda x, *params: multi_gaussian_model(x, offset, *params), # multi_gaussian_model,
+            w,
+            f,
+            p0 = p0,
+            bounds = (bounds_lo, bounds_hi))
+    
+    # Split results in multiple tuples
+    gaussian_results = [(popt[i], popt[i+1], popt[i+2]) for i in range(0, len(popt)-1,3)]
+    
+    # print("Multi gaussian result ", gaussian_results)
+    
+    final_results = []
+    
+    for line, result in zip(group_lines, gaussian_results):
+        name, model, lam_expected, lam_detected, z, group = line
+        amp, mu, sigma = result
+        
+        sigma_nom = abs(sigma)
+        fwhm_fit = 2.355 * sigma_nom
+        fwhm_nom = fwhm_fit #np.clip(fwhm_fit, 0.7 * fwhm_instr, 1.5 * fwhm_instr)
+        ew_nom = np.sqrt(2 * np.pi) * abs(amp) * sigma_nom / offset
+        
+        final_results.append((name, lam_detected, mu, ew_nom, 0.0, fwhm_nom, 0.0))
+        
+        if plot:
+            print("amp =",amp,"\nmu =",mu,"\nsigma =",sigma,"\noffset =",offset)
+            plot_multi_gauss_fit(w, f, continuum, popt, (amp, mu, sigma, offset), name)
+        
+    return final_results
+
+
+
+def mc_blend_group_errors(wavelength, flux, continuum_env, group_lines):
+    # noise estimate
+    noise_cont_mask = (wavelength > 5500) & (wavelength < 5600)
+    # noise = estimate_noise(f, cont_mask)
+    noise = estimate_noise(flux, noise_cont_mask)
+    
+    # Monte Carlo error propagation
+    ew_mc = defaultdict(list)
+    fwhm_mc = defaultdict(list)
+    
+    for _ in range(n_mc):
+        flux_mc = (flux + np.random.normal(0, noise, size=len(flux)))
+        continuum_mc = estimate_continuum(wavelength, flux_mc)
+        
+        group_results = fit_blend_group(wavelength, flux_mc, continuum_mc, group_lines)
+        
+        for name, _, _, ew, _, fwhm, _ in group_results:
+            ew_mc[name].append(ew)
+            fwhm_mc[name].append(fwhm)
+    
+    results = []
+    
+    for line in group_lines:
+        name = line[0]
+        delta_ew = np.nanstd(np.array(ew_mc[name]))
+        delta_fwhm = np.nanstd(np.array(fwhm_mc[name]))
+        results.append((name, delta_ew, delta_fwhm))
+    
+    return results
+
+
     
 def fit_all_identified_lines(wavelength, flux, continuum_env, identified_lines):
     results = []
+    blend_groups = defaultdict(list)
+    win_size = 2
 
-    for name, model, lam_expected, lam_detected, _ in identified_lines:
-        win_size = 2
+    for name, model, lam_expected, lam_detected, z, group in identified_lines:
         
-        mu, ew_nom, delta_ew, fwhm_nom, delta_fwhm = fit_identified_line(wavelength, flux, continuum_env, identified_lines, name, lam_detected, win_size, model)
-        
-        results.append({
-            "Line": name,
-            "Lambda min": lam_detected,
-            "Lambda fit": mu,
-            "EW": ew_nom,
-            "EW_Err": delta_ew,
-            "FWHM": fwhm_nom,
-            "FWHM_Err": delta_fwhm
-        })
-    
+        if not isinstance(group, str):
+
+            mu, ew_nom, delta_ew, fwhm_nom, delta_fwhm = fit_identified_line(wavelength, flux, continuum_env, identified_lines, name, lam_detected, win_size, model)
+
+            results.append({
+                "Line": name,
+                "Lambda min": lam_detected,
+                "Lambda fit": mu,
+                "EW": ew_nom,
+                "EW_Err": delta_ew,
+                "FWHM": fwhm_nom,
+                "FWHM_Err": delta_fwhm
+            })
+        else:
+            blend_groups[group].append((name, model, lam_expected, lam_detected, z, group))
+            
+    for group_lines in blend_groups.values():
+        group_results = fit_blend_group(wavelength, flux, continuum_env, group_lines, plot=True)
+        group_errors = mc_blend_group_errors(wavelength, flux, continuum_env, group_lines)
+        for values, errors in zip(group_results, group_errors):
+            name, lam_detected, mu, ew_nom, _, fwhm_nom, _ = values
+            _, delta_ew, delta_fwhm = errors
+            results.append({
+                "Line": name,
+                "Lambda min": lam_detected,
+                "Lambda fit": mu,
+                "EW": ew_nom,
+                "EW_Err": delta_ew,
+                "FWHM": fwhm_nom,
+                "FWHM_Err": delta_fwhm
+            })
+            
     return results

@@ -67,10 +67,12 @@ def instr_fwhm(lambda0, R):
     
 def estimate_fwhm(wavelength, flux, peak_index):
     
-    fwhm_instr = instr_fwhm(wavelength[peak_index], R_instr)
+    peak_wl = wavelength[peak_index]
+    fwhm_instr = instr_fwhm(peak_wl, R_instr)
     
     peak_flux = flux[peak_index]
-    half_max = peak_flux + (np.nanmax(flux) - peak_flux) / 2
+    local_max_flux = np.nanmax(flux[(wavelength > (peak_wl-200)) & (wavelength < (peak_wl+200))])
+    half_max = peak_flux + (local_max_flux - peak_flux) / 2
     
     left = peak_index
     while left > 0 and flux[left] < half_max:
@@ -289,6 +291,7 @@ def line_region_overlapping(wavelength, flux, lam, left, right, other_lam, win_s
     other_fwhm = estimate_fwhm(wavelength, flux, other_peak_idx)
     other_left = other_lam - win_size * other_fwhm
     other_right = other_lam + win_size * other_fwhm
+    #print("other_fwhm",other_fwhm,"other_left",other_left,"other_right",other_right)
     if other_right < left or other_left > right:
         # no overlap
         return (left, right)
@@ -310,7 +313,7 @@ def fit_identified_line(wavelength, flux, continuum_env, identified_lines, name,
     
     fwhm_use = estimate_fwhm(wavelength, flux, peak_idx)
     
-    #print("fwhm_use = ", fwhm_use)
+    print("fwhm_use = ", fwhm_use)
     
     # Extraction window
     
@@ -320,6 +323,8 @@ def fit_identified_line(wavelength, flux, continuum_env, identified_lines, name,
     for other_name, _, _, other_lam_detected, _, _ in identified_lines:
         if name != other_name:
             left, right = line_region_overlapping(wavelength, flux, lam_detected, left, right, other_lam_detected, win_size)
+            #print(other_name,"left",left,"right",right)
+            
     mask = (wavelength > left) & (wavelength < right)
     
     w = wavelength[mask]
@@ -364,8 +369,8 @@ def multi_gaussian_initial_guess(lines, wavelength, flux, continuum):
         sigma_instr = fwhm_instr / 2.355
         
         p0 += [amp0, lam0, sigma_instr]
-        bounds_lo += [-1.0, lam0 - 2.0, 0.5 * sigma_instr]
-        bounds_hi += [ 0.0, lam0 + 2.0, 3.0 * sigma_instr]
+        bounds_lo += [-1.5, lam0 - 3.0, 0.25 * sigma_instr]
+        bounds_hi += [ 0.5, lam0 + 3.0, 4.0 * sigma_instr]
     
     return (p0, bounds_lo, bounds_hi)
 

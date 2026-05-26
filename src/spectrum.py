@@ -135,16 +135,21 @@ def identify_absorption_lines(peak_wavelengths, peak_fluxes, spectral_lines, z =
     identified_lines = []
     for name, model, lam_rest, group in spectral_lines:
         lam_obs = lam_rest * (1 + z)
-        
-        # find detected peaks close to this known line
-        distance = np.abs(peak_wavelengths - lam_obs)
-        match = np.where(distance < line_window)[0]
-        
-        if len(match) > 0:
-            best = match[np.argmin(distance[match])]
+        if not isinstance(group, str): 
+            # find detected peaks close to this known line
+            distance = np.abs(peak_wavelengths - lam_obs)
+            match = np.where(distance < line_window)[0]
+            
+            if len(match) > 0:
+                best = match[np.argmin(distance[match])]
+                identified_lines.append(
+                    (name, model, lam_obs, peak_wavelengths[best], z, group)
+                )
+        else:
             identified_lines.append(
-                (name, model, lam_obs, peak_wavelengths[best], peak_fluxes[best], group)
-            )
+                    (name, model, lam_obs, lam_obs, z, group)
+                )
+
     
     return identified_lines
             

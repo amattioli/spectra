@@ -1,0 +1,213 @@
+﻿wavelength_A,amplitude,fwhm_A,profile,source,balmer_name,tag,label_status,n_candidate_lines,labels,short_label
+3711.88,0.0594,3.47,Gaussian,single,,other,confirmed,51,H I 3712.0,H I 3712
+3722.19,0.1274,5.09,Gaussian,deblended,,other,confirmed,77,H I 3721.9,H I 3722
+3734.17,0.2392,6.01,Gaussian,single,,other,confirmed,94,H I 3734.4,H I 3734
+3746.89,0.015,2.66,Gaussian,deblended,,other,uncertain_discarded,29,,
+3749.94,0.3137,6.64,Gaussian,deblended,,other,confirmed,56,"H I 3750.1, H I 3750.2",H I 3750
+3755.3,0.0222,4.15,Gaussian,deblended,,other,confirmed,46,,
+3765.88,0.0108,3.45,Gaussian,deblended,,other,uncertain_discarded,35,,
+3770.7,0.4319,9.28,Gaussian,deblended,,other,confirmed,42,"H I 3770.6, H I 3770.7",H I 3771
+3777.26,0.0134,3.85,Gaussian,deblended,,other,uncertain_discarded,39,,
+3789.21,0.0249,4.24,Gaussian,deblended,,other,confirmed,77,Fe I 3787.9,Fe I 3788
+3797.76,0.5577,11.44,Gaussian,deblended,,other,confirmed,112,H I 3797.9,H I 3798
+3805.27,0.0392,3.55,Gaussian,deblended,,other,confirmed,32,Fe I 3805.3,Fe I 3805
+3807.58,0.0323,5.65,Gaussian,deblended,,other,confirmed,51,"Fe I 3806.7, Ni I 3807.1",Fe I/Ni I 3807
+3814.19,0.0211,3.69,Gaussian,deblended,,other,uncertain_discarded,36,,
+3824.89,0.042,5.82,Gaussian,deblended,,other,confirmed,62,"Fe I 3824.4, Fe I 3825.9",Fe I 3824-26
+3835.29,0.6209,14.36,Gaussian,deblended,,other,confirmed,67,H I 3835.4,H I 3835
+3847.55,0.0554,7.74,Gaussian,deblended,,other,confirmed,61,Fe I 3846.8,Fe I 3847
+3853.17,0.0157,13.27,Gaussian,deblended,,other,uncertain_discarded,115,,
+3875.82,0.0421,7.41,Gaussian,deblended,,other,confirmed,80,Fe I 3878.0,Fe I 3878
+3888.82,0.6397,16.63,Gaussian,deblended,,other,confirmed,143,"H I 3889.0, H I 3889.1",H I 3889
+3902.32,0.0381,6.69,Gaussian,deblended,,other,confirmed,91,Fe I 3902.9,Fe I 3903
+3906.09,0.074,17.88,Gaussian,deblended,,other,confirmed,143,Si I 3905.5,Si I 3906
+3928.05,0.0152,2.75,Gaussian,deblended,,other,uncertain_discarded,41,,
+3933.61,0.2454,5.57,Gaussian,deblended,,other,confirmed,49,Ca II 3933.7,Ca II 3934
+3953.78,0.019,12.03,Gaussian,deblended,,other,confirmed,84,V II 3952.0,V II 3952
+3955.97,0.0453,10.92,Gaussian,deblended,,other,confirmed,17,"Fe I 3956.7, Fe I 3956.4",Fe I 3956-57
+3959.19,0.0279,5.63,Gaussian,deblended,,other,confirmed,29,Al I 3961.5,Al I 3962
+3969.88,0.6705,15.39,Voigt,deblended,Hε,Balmer,confirmed,87,"H I 3970.0, H I 3970.1",H I 3970
+3981.5,0.0151,7.54,Gaussian,deblended,,other,confirmed,37,"Ti II 3982.0, Fe I 3981.8",Ti II/Fe I 3982
+3982.74,0.0551,7.73,Gaussian,deblended,,other,uncertain_discarded,49,,
+4005.36,0.0144,3.76,Gaussian,deblended,,other,uncertain_discarded,31,,
+4014.01,0.0143,4.9,Gaussian,deblended,,other,confirmed,47,Ti II 4012.4,Ti II 4012
+4024.53,0.0119,3.17,Gaussian,deblended,,other,uncertain_discarded,38,,
+4029.16,0.0248,9.02,Gaussian,deblended,,other,confirmed,34,"Ti II 4028.3, Mn I 4030.8",Ti II/Mn I 4028-31
+4033.96,0.004,3.17,Gaussian,deblended,,other,uncertain_discarded,33,,
+4046.29,0.0276,4.37,Gaussian,deblended,,other,confirmed,32,Fe I 4045.8,Fe I 4046
+4053.95,0.0132,4.72,Gaussian,deblended,,other,confirmed,50,Ti II 4053.8,Ti II 4054
+4101.73,0.66,18.89,Voigt,deblended,Hδ,Balmer,confirmed,158,"H I 4101.7, H I 4101.8",H I 4102
+4130.22,0.023,5.35,Gaussian,deblended,,other,confirmed,51,Si II 4130.9,Si II 4131
+4144.63,0.0148,4.06,Gaussian,deblended,,other,confirmed,31,"Fe I 4143.9, Fe I 4143.4",Fe I 4143-44
+4156.4,0.0052,16.28,Gaussian,deblended,,other,uncertain_discarded,49,,
+4162.57,0.0089,3.81,Gaussian,deblended,,other,uncertain_discarded,26,,
+4176.87,0.045,11.27,Gaussian,deblended,,other,confirmed,78,Fe II 4178.9,Fe II 4179
+4188.13,0.0151,5.19,Gaussian,deblended,,other,confirmed,35,"Fe I 4187.8, Fe I 4187.0",Fe I 4187-88
+4200.27,0.0267,6.28,Gaussian,deblended,,other,confirmed,32,"Fe I 4199.1, Fe I 4202.0",Fe I 4199-4202
+4205.38,0.0037,4.31,Gaussian,deblended,,other,uncertain_discarded,33,,
+4216.25,0.0119,2.75,Gaussian,deblended,,other,confirmed,17,Sr II 4215.5,Sr II 4216
+4226.33,0.0241,3.69,Gaussian,deblended,,other,confirmed,22,"Ca I 4226.7, Fe I 4227.4",Ca I/Fe I 4227
+4234.28,0.0178,3.53,Gaussian,deblended,,other,confirmed,24,"Fe II 4233.2, Fe I 4235.9, Fe I 4233.6",Fe I/Fe II 4233-36
+4247.72,0.0022,1.96,Gaussian,deblended,,other,uncertain_discarded,12,,
+4250.7,0.0102,4.33,Gaussian,deblended,,other,uncertain_discarded,15,,
+4260.85,0.0186,3.88,Gaussian,deblended,,other,confirmed,32,"Fe I 4260.5, Cr II 4261.9",Fe I/Cr II 4260-62
+4272.76,0.0464,5.35,Gaussian,deblended,,other,confirmed,22,"Fe I 4271.8, Fe I 4271.1, Fe II 4273.3",Fe I/Fe II 4271-73
+4276.38,0.0026,3.09,Gaussian,deblended,,other,uncertain_discarded,19,,
+4289.67,0.0097,2.72,Gaussian,deblended,,other,uncertain_discarded,39,,
+4315.56,0.0105,4.89,Gaussian,deblended,,other,uncertain_discarded,33,,
+4327.86,0.0454,7.86,Gaussian,deblended,,other,confirmed,58,Fe I 4325.8,Fe I 4326
+4340.72,0.6339,17.17,Voigt,deblended,Hγ,Balmer,confirmed,54,"H I 4340.4, H I 4340.5",H I 4340
+4353.94,0.0503,10.43,Gaussian,deblended,,other,confirmed,56,"Fe II 4351.8, Mg I 4351.9",Fe II/Mg I 4352
+4385.31,0.045,6.67,Gaussian,deblended,,other,confirmed,38,"Fe II 4385.4, Fe I 4383.5",Fe II/Fe I 4384-85
+4395.25,0.03,5.65,Gaussian,deblended,,other,confirmed,37,Ti II 4395.0,Ti II 4395
+4401.37,0.0112,4.82,Gaussian,deblended,,other,uncertain_discarded,17,,
+4405.1,0.0069,7.06,Gaussian,deblended,,other,uncertain_discarded,46,,
+4417.14,0.0396,5.17,Gaussian,deblended,,other,confirmed,32,"Ti II 4417.7, Fe II 4416.8",Ti II/Fe II 4417-18
+4432.14,0.0099,10.85,Gaussian,deblended,,other,confirmed,58,Ca I 4435.0,Ca I 4435
+4443.68,0.0353,4.63,Gaussian,deblended,,other,confirmed,43,Ti II 4443.8,Ti II 4444
+4450.91,0.0184,10.7,Gaussian,deblended,,other,confirmed,60,Ti II 4450.5,Ti II 4450
+4462.14,0.0042,1.95,Gaussian,deblended,,other,confirmed,22,,
+4469.31,0.0255,6.54,Gaussian,deblended,,other,uncertain_discarded,56,,
+4481.48,0.0765,4.64,Gaussian,deblended,,other,confirmed,26,"Mg II 4481.1, Mg II 4481.3",Mg II 4481
+4490.78,0.0177,5.65,Gaussian,deblended,,other,confirmed,43,"Fe II 4491.4, Fe II 4489.2",Fe II 4489-91
+4501.58,0.0164,6.11,Gaussian,deblended,,other,uncertain_discarded,33,,
+4508.95,0.0152,5.65,Gaussian,deblended,,other,confirmed,24,Fe II 4508.3,Fe II 4508
+4521.19,0.0264,9.32,Gaussian,deblended,,other,confirmed,38,"Fe II 4522.6, Fe II 4520.2",Fe II 4520-23
+4533.19,0.0241,7.86,Gaussian,deblended,,other,uncertain_discarded,56,,
+4549.36,0.0246,3.62,Gaussian,deblended,,other,confirmed,21,"Ti II 4549.6, Fe II 4549.5",Ti II/Fe II 4549-50
+4554.45,0.0464,11.01,Gaussian,deblended,,other,confirmed,47,"Fe II 4555.9, Ba II 4554.0, Cr II 4555.0",Fe II/Ba II/Cr II 4554-56
+4564.8,0.0115,3.05,Gaussian,deblended,,other,uncertain_discarded,24,,
+4572.99,0.0128,4.23,Gaussian,deblended,,other,uncertain_discarded,24,,
+4585.57,0.039,16.13,Gaussian,deblended,,other,confirmed,93,"Fe II 4583.8, Cr II 4588.2",Fe II/Cr II 4584-88
+4618.83,0.0224,5.65,Gaussian,deblended,,other,confirmed,27,"Cr II 4618.8, Fe II 4620.5",Cr II/Fe II 4619-21
+4632.63,0.0278,9.27,Gaussian,deblended,,other,confirmed,26,"Cr II 4634.1, Fe II 4629.3",Cr II/Fe II 4629-34
+4636.29,0.0058,3.75,Gaussian,deblended,,other,confirmed,14,Fe II 4635.3,Fe II 4635
+4648.11,0.0056,5.38,Gaussian,deblended,,other,confirmed,18,"Ni I 4648.6, Fe I 4647.4",Ni I/Fe I 4647-49
+4667.37,0.0211,6.81,Gaussian,deblended,,other,confirmed,51,Fe II 4666.8,Fe II 4667
+4680.4,0.0078,9.95,Gaussian,deblended,,other,confirmed,26,Fe I 4678.9,Fe I 4679
+4692.55,0.0028,4.56,Gaussian,deblended,,other,confirmed,12,"Fe I 4691.4, S I 4694.1",Fe I/S I 4691-94
+4699.79,0.0081,11.29,Gaussian,deblended,,other,uncertain_discarded,11,,
+4703.17,0.0054,3.77,Gaussian,deblended,,other,confirmed,8,Mg I 4703.0,Mg I 4703
+4708.93,0.0031,2.16,Gaussian,deblended,,other,confirmed,10,"Ti II 4708.7, Fe I 4707.3",Ti II/Fe I 4707-09
+4714.51,0.0062,4.9,Gaussian,deblended,,other,confirmed,17,Ni I 4714.4,Ni I 4714
+4731.97,0.0094,5.8,Gaussian,deblended,,other,confirmed,21,Fe II 4731.4,Fe II 4731
+4739.21,0.0033,3.5,Gaussian,deblended,,other,confirmed,19,Fe I 4736.8,Fe I 4737
+4764.18,0.0085,3.88,Gaussian,deblended,,other,confirmed,16,Ti II 4763.9,Ti II 4764
+4768.09,0.0015,7.14,Gaussian,deblended,,other,uncertain_discarded,23,,
+4780.44,0.0053,3.25,Gaussian,single,,other,confirmed,8,Ti II 4780.0,Ti II 4780
+4799.76,0.0036,2.95,Gaussian,deblended,,other,confirmed,12,"Ca II 4800.0, Ti II 4798.5",Ca II/Ti II 4799-4800
+4805.0,0.0095,4.38,Gaussian,deblended,,other,confirmed,12,Ti II 4805.1,Ti II 4805
+4811.4,0.0036,2.51,Gaussian,deblended,,other,confirmed,8,"Cr II 4812.3, Zn I 4810.5",Cr II/Zn I 4811-12
+4843.88,0.0446,11.48,Gaussian,deblended,,other,uncertain_discarded,39,,
+4861.18,0.5686,19.06,Voigt,deblended,Hβ,Balmer,confirmed,40,"H I 4861.3, H I 4861.4",H I 4861
+4879.09,0.0449,18.25,Gaussian,deblended,,other,uncertain_discarded,44,,
+4911.12,0.0069,2.63,Gaussian,deblended,,other,confirmed,12,Ti II 4911.2,Ti II 4911
+4919.07,0.007,2.34,Gaussian,deblended,,other,uncertain_discarded,10,,
+4922.92,0.0327,5.38,Gaussian,deblended,,other,confirmed,18,Fe II 4923.9,Fe II 4924
+4934.75,0.0119,3.99,Gaussian,deblended,,other,confirmed,15,"Ba II 4934.1, C I 4932.1",Ba II/C I 4932-34
+4938.13,0.0021,3.11,Gaussian,deblended,,other,confirmed,9,Fe I 4938.8,Fe I 4939
+4957.31,0.0176,4.49,Gaussian,deblended,,other,confirmed,8,"Fe I 4957.6, Fe I 4957.3",Fe I 4957-58
+4983.79,0.0167,8.56,Gaussian,deblended,,other,confirmed,31,Fe I 4982.5,Fe I 4982
+4992.34,0.0098,4.21,Gaussian,deblended,,other,confirmed,16,Fe II 4993.4,Fe II 4993
+5002.9,0.0182,5.68,Gaussian,deblended,,other,confirmed,22,"Fe I 5001.9, Ca II 5001.5, Fe II 5001.9",Fe I/Ca II/Fe II 5001-02
+5007.14,0.0038,2.65,Gaussian,deblended,,other,uncertain_discarded,12,,
+5018.83,0.0381,5.36,Gaussian,deblended,,other,confirmed,44,Fe II 5018.4,Fe II 5018
+5038.6,0.0326,9.47,Gaussian,deblended,,other,confirmed,33,C I 5039.1,C I 5039
+5042.42,0.0066,3.5,Gaussian,deblended,,other,confirmed,15,Si II 5041.0,Si II 5041
+5056.91,0.0203,4.68,Gaussian,deblended,,other,confirmed,8,"Si II 5056.0, Si II 5056.3",Si II 5056
+5059.53,0.0016,2.06,Gaussian,deblended,,other,confirmed,4,"Fe I 5060.0, Fe II 5060.2",Fe I/Fe II 5060
+5070.37,0.0059,7.13,Gaussian,deblended,,other,confirmed,25,Ti II 5072.3,Ti II 5072
+5080.1,0.0044,7.6,Gaussian,deblended,,other,confirmed,33,"Ni I 5080.5, Ni I 5081.1",Ni I 5081
+5094.77,0.0022,3.23,Gaussian,deblended,,other,confirmed,10,"Fe I 5097.0, Fe II 5093.6",Fe I/Fe II 5094-97
+5100.05,0.0144,6.85,Gaussian,deblended,,other,confirmed,15,Fe II 5100.7,Fe II 5101
+5103.02,0.0015,2.58,Gaussian,deblended,,other,confirmed,7,Nd III 5102.4,Nd III 5102
+5128.33,0.0046,4.17,Gaussian,single,,other,uncertain_discarded,27,,
+5169.34,0.0567,6.8,Gaussian,deblended,,other,confirmed,26,"Fe II 5169.0, Mg I 5167.3",Fe II/Mg I 5167-69
+5174.01,0.0045,2.83,Gaussian,deblended,,other,uncertain_discarded,10,,
+5185.99,0.0252,10.31,Gaussian,deblended,,other,confirmed,39,"Mg I 5183.6, Ti II 5188.7, Ti II 5185.9",Ti II/Mg I 5184-89
+5196.79,0.0136,5.23,Gaussian,deblended,,other,confirmed,37,Fe II 5197.6,Fe II 5198
+5216.64,0.0044,2.52,Gaussian,single,,other,confirmed,17,Fe II 5216.9,Fe II 5217
+5227.21,0.0336,5.0,Gaussian,deblended,,other,confirmed,32,"Ti II 5226.5, Fe I 5227.2",Ti II/Fe I 5227
+5234.64,0.0273,6.69,Gaussian,deblended,,other,confirmed,20,"Fe II 5234.6, Fe I 5232.9",Fe II/Fe I 5233-35
+5251.69,0.0042,8.42,Gaussian,deblended,,other,confirmed,23,Fe II 5251.2,Fe II 5251
+5255.65,0.002,3.4,Gaussian,deblended,,other,uncertain_discarded,15,,
+5264.43,0.0051,4.33,Gaussian,deblended,,other,uncertain_discarded,24,,
+5268.81,0.0292,18.55,Gaussian,deblended,,other,confirmed,14,"Fe I 5269.5, Fe I 5270.4",Fe I 5270
+5276.29,0.0104,5.7,Gaussian,deblended,,other,confirmed,18,"Fe II 5276.0, Cr II 5275.0",Fe II/Cr II 5275-76
+5283.82,0.0099,5.35,Gaussian,deblended,,other,confirmed,10,"Fe II 5284.1, Fe I 5283.6",Fe II/Fe I 5284
+5307.19,0.0059,6.07,Gaussian,deblended,,other,confirmed,19,"Cr II 5305.9, Ca II 5307.2",Cr II/Ca II 5306-07
+5316.29,0.0279,5.6,Gaussian,deblended,,other,confirmed,15,"Fe II 5316.6, Fe II 5316.8",Fe II 5317
+5326.92,0.0104,5.29,Gaussian,single,,other,uncertain_discarded,22,,
+5338.47,0.0133,4.54,Gaussian,single,,other,confirmed,14,"Ti II 5336.8, Ca II 5339.2",Ti II/Ca II 5337-39
+5362.43,0.0027,3.52,Gaussian,deblended,,other,uncertain_discarded,7,,
+5365.52,0.0174,9.2,Gaussian,deblended,,other,confirmed,7,"Fe I 5367.5, Fe I 5364.9",Fe I 5365-67
+5371.13,0.0044,3.52,Gaussian,deblended,,other,uncertain_discarded,13,,
+5383.2,0.0059,4.19,Gaussian,single,,other,confirmed,14,"Fe I 5383.4, C I 5380.3",Fe I/C I 5380-83
+5396.58,0.0015,2.9,Gaussian,deblended,,other,uncertain_discarded,14,,
+5403.58,0.009,10.25,Gaussian,deblended,,other,confirmed,25,"Fe I 5404.1, Fe I 5404.1",Fe I 5404
+5413.44,0.0017,6.04,Gaussian,deblended,,other,uncertain_discarded,12,,
+5413.64,0.003,6.02,Gaussian,deblended,,other,uncertain_discarded,9,,
+5425.27,0.0038,2.86,Gaussian,deblended,,other,uncertain_discarded,6,,
+5432.04,0.0059,17.54,Gaussian,deblended,,other,confirmed,28,"Fe I 5429.7, Fe II 5433.0",Fe I/Fe II 5430-33
+5446.01,0.0057,4.09,Gaussian,deblended,,other,confirmed,16,"Fe I 5446.9, Fe I 5445.0",Fe I 5445-47
+5458.19,0.0086,15.0,Gaussian,deblended,,other,confirmed,17,"Fe I 5455.4, Fe I 5455.6",Fe I 5455-56
+5464.12,0.004,4.09,Gaussian,deblended,,other,confirmed,12,"Fe I 5463.3, Fe I 5463.0",Fe I 5463
+5477.81,0.009,4.01,Gaussian,single,,other,confirmed,20,"Ni I 5476.9, Cr II 5478.4",Ni I/Cr II 5477-78
+5506.03,0.008,8.26,Gaussian,single,,other,confirmed,41,Fe II 5506.2,Fe II 5506
+5525.73,0.0014,3.75,Gaussian,deblended,,other,uncertain_discarded,4,,
+5530.54,0.0121,10.24,Gaussian,deblended,,other,confirmed,13,Mg I 5528.4,Mg I 5528
+5535.85,0.0036,3.4,Gaussian,deblended,,other,confirmed,7,Fe II 5534.8,Fe II 5535
+5588.11,0.0119,5.73,Gaussian,deblended,,other,confirmed,19,"Fe I 5586.8, Ca I 5588.8",Fe I/Ca I 5587-89
+5595.08,0.0031,6.58,Gaussian,deblended,,other,confirmed,12,Ca I 5594.5,Ca I 5594
+5616.56,0.0068,5.14,Gaussian,single,,other,confirmed,5,Fe I 5615.6,Fe I 5616
+5681.93,0.0027,3.35,Gaussian,deblended,,other,confirmed,5,"Na I 5682.6, Sc II 5684.2",Na I/Sc II 5683-84
+5689.09,0.0224,13.12,Gaussian,deblended,,other,uncertain_discarded,10,,
+5699.82,0.0102,4.7,Gaussian,deblended,,other,uncertain_discarded,8,,
+5721.95,0.0082,11.52,Gaussian,single,,other,uncertain_discarded,16,,
+5745.34,0.0085,5.71,Gaussian,single,,other,uncertain_discarded,23,,
+5755.2,0.0047,3.68,Gaussian,single,,other,confirmed,11,Fe I 5753.1,Fe I 5753
+5785.16,0.0026,11.73,Gaussian,deblended,,other,confirmed,36,,
+5791.62,0.0067,2.72,Gaussian,deblended,,other,confirmed,10,C I 5793.1,C I 5793
+5880.39,0.0118,20.0,Gaussian,deblended,,other,uncertain_discarded,23,,
+5889.47,0.0147,4.49,Gaussian,deblended,,other,confirmed,6,Na I 5889.9,Na I 5890
+5892.29,0.125,18.53,Gaussian,deblended,,other,uncertain_discarded,8,,
+5900.67,0.0478,5.69,Gaussian,deblended,,other,uncertain_discarded,8,,
+5910.84,0.054,9.49,Gaussian,deblended,,other,uncertain_discarded,8,,
+5921.61,0.1012,11.25,Gaussian,deblended,,other,uncertain_discarded,8,,
+5932.88,0.025,4.61,Gaussian,deblended,,other,uncertain_discarded,7,,
+5945.49,0.1242,12.66,Gaussian,deblended,,other,uncertain_discarded,4,,
+5959.17,0.0634,6.64,Gaussian,deblended,,other,uncertain_discarded,13,,
+5968.75,0.075,7.25,Gaussian,deblended,,other,uncertain_discarded,6,,
+5977.64,0.0569,6.79,Gaussian,deblended,,other,uncertain_discarded,8,,
+5989.86,0.0422,13.71,Gaussian,deblended,,other,uncertain_discarded,12,,
+6002.36,0.0094,6.93,Gaussian,deblended,,other,uncertain_discarded,14,,
+6015.15,0.0114,20.0,Gaussian,deblended,,other,confirmed,26,"C I 6013.2, C I 6014.8",C I 6013-15
+6084.65,0.0067,8.51,Gaussian,single,,other,confirmed,11,Fe II 6084.1,Fe II 6084
+6145.76,0.0053,13.3,Gaussian,single,,other,confirmed,20,"Fe II 6147.7, Fe II 6149.2",Fe II 6148-49
+6157.54,0.0055,2.64,Gaussian,single,,other,uncertain_discarded,14,,
+6178.43,0.0059,8.85,Gaussian,single,,other,confirmed,21,Fe II 6175.1,Fe II 6175
+6242.06,0.0116,18.05,Gaussian,single,,other,confirmed,35,Fe II 6238.4,Fe II 6238
+6269.97,0.009,8.31,Gaussian,deblended,,other,uncertain_discarded,5,,
+6279.33,0.108,7.34,Gaussian,deblended,,other,uncertain_discarded,4,,
+6294.13,0.047,18.35,Gaussian,deblended,,other,uncertain_discarded,12,,
+6307.03,0.0068,4.17,Gaussian,deblended,,other,uncertain_discarded,5,,
+6318.63,0.0271,11.61,Gaussian,deblended,,other,uncertain_discarded,13,,
+6332.09,0.0058,6.55,Gaussian,deblended,,other,confirmed,6,Fe II 6331.9,Fe II 6332
+6347.41,0.0332,6.12,Gaussian,single,,other,confirmed,9,Si II 6347.1,Si II 6347
+6371.76,0.0295,5.41,Gaussian,single,,other,confirmed,9,Si II 6371.4,Si II 6371
+6384.81,0.0066,5.62,Gaussian,single,,other,confirmed,4,"Fe II 6383.7, Fe II 6385.5",Fe II 6384-85
+6417.04,0.009,6.93,Gaussian,single,,other,confirmed,14,Fe II 6416.9,Fe II 6417
+6433.96,0.0075,3.66,Gaussian,single,,other,confirmed,3,Fe II 6432.7,Fe II 6433
+6456.71,0.0097,4.11,Gaussian,deblended,,other,confirmed,11,"Fe II 6456.4, Ca II 6456.9",Fe II/Ca II 6456-57
+6459.16,0.0284,8.91,Gaussian,deblended,,other,uncertain_discarded,6,,
+6467.42,0.0063,6.26,Gaussian,deblended,,other,uncertain_discarded,2,,
+6476.09,0.0185,3.26,Gaussian,deblended,,other,no_lines_in_window,0,,
+6483.69,0.0068,20.0,Gaussian,deblended,,other,confirmed,8,Fe II 6482.2,Fe II 6482
+6485.51,0.018,4.22,Gaussian,deblended,,other,uncertain_discarded,3,,
+6494.42,0.049,7.4,Gaussian,deblended,,other,uncertain_discarded,15,,
+6517.3,0.1091,7.33,Gaussian,deblended,,other,uncertain_discarded,8,,
+6539.05,0.0317,18.84,Gaussian,deblended,,other,uncertain_discarded,13,,
+6548.7,0.0609,10.31,Gaussian,deblended,,other,uncertain_discarded,9,,
+6562.84,0.4611,17.5,Voigt,deblended,Hα,Balmer,confirmed,14,"H I 6562.9, H I 6562.7, H I 6562.8",H I 6563
+6574.66,0.0368,5.61,Gaussian,deblended,,other,uncertain_discarded,7,,
+6582.99,0.0331,13.83,Gaussian,deblended,,other,uncertain_discarded,12,,

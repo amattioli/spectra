@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Index</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>Iota_Boo</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7511,27 +7511,126 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f7610c0d">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bf5e976d">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Bootes">Bootes<a class="anchor-link" href="#Bootes">¶</a></h1>
+<h1 id="Iota-Bootis">Iota <a href="Index.html">Bootis</a><a class="anchor-link" href="#Iota-Bootis">¶</a></h1>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=33cb7ef9">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=64b38558">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Descrizione">Descrizione<a class="anchor-link" href="#Descrizione">¶</a></h2>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=74601b17">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>For ι Boo itself — the primary, ι Boo A (HR 5350 / HD 125161, the A7V δ Scuti pulsator), not its wide K-dwarf companion HD 234121 — here's what's published, including one paper that did this exact VALD extraction for this exact star:</p>
+<table>
+<thead>
+<tr>
+<th>VALD field</th>
+<th>Fossati et al. 2008 (spectroscopic, used VALD directly on this star)</th>
+<th>Newer catalog value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Teff</td>
+<td>7700 K</td>
+<td>7,764 K</td>
+</tr>
+<tr>
+<td>log g</td>
+<td>4.45</td>
+<td>4.14</td>
+</tr>
+<tr>
+<td>Microturbulence</td>
+<td>2.6 km/s</td>
+<td>not reported</td>
+</tr>
+<tr>
+<td>Composition</td>
+<td>essentially solar Fe (about +0.04 dex above their solar reference), with S, Ti, Y, Ba mildly enhanced</td>
+<td>[Fe/H] = +0.19</td>
+</tr>
+<tr>
+<td>(context only, not a VALD field) v sin i</td>
+<td>131 km/s</td>
+<td>144 km/s</td>
+</tr>
+</tbody>
+</table>
+<p>I'd lead with the Fossati column — it's a complete, self-consistent set (including the microturbulence, which the catalog entry doesn't give you at all), and it's literally the values used with VALD line data and the LLMODELS/Synth3 pipeline to derive this star's own abundances.</p>
+<p>A couple of things worth knowing before you commit to numbers:</p>
+<ul>
+<li><strong>The 0.3 dex gap in log g (4.45 vs 4.14) is expected, not a red flag.</strong> Iota Boo A is a fast rotator, and Fossati et al. note that spectroscopic log g gets substantially less certain as rotation increases — for a ~130 km/s rotator like this one, they estimate roughly ±0.22 dex, which mostly closes the gap between the two values.</li>
+<li><strong>Composition is genuinely a bit fuzzy for this star.</strong> Only sulfur, titanium, yttrium, and barium came out overabundant in the detailed analysis; carbon, magnesium, silicon, calcium, scandium, chromium, iron, and nickel all matched solar. So "solar" (or solar +0.1–0.2) is a defensible composition for a general-purpose line list; if you want it tailored to this star specifically, you could hand-enter those four elements and leave the rest at solar defaults — I can help build that abundance block if you want it.</li>
+<li><strong>v sin i ≈ 130–144 km/s isn't something you enter into Extract Stellar</strong> (it doesn't take rotation as input), but it matters for what you do with the output: at that rotation most of the "significant" lines VALD flags will be blended together in your actual spectrum, so a denser threshold is often more useful here than for a slow rotator.</li>
+</ul>
+<p>Wavelength range and detection threshold are really up to your use case rather than something to "look up" — Fossati's team worked across 3872–6943 Å; if you're not trying to match their study specifically, 0.01 is a common threshold for the visibly significant lines, or 0.001 if you want a denser list that captures likely blends.</p>
+<p><a href="https://docs.google.com/spreadsheets/d/1sySXdZ5a7hZds53vMpI3NHeE4EIuzC_6HmU79BHYtus/edit?usp=drive_link">Riconoscimento Righe</a></p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=8cfe378b">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Classificazione">Classificazione<a class="anchor-link" href="#Classificazione">¶</a></h2>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=24944e6f">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<p>Classificazione <a href="https://simbad.cds.unistra.fr/simbad/sim-basic?Ident=iota+boo&amp;submit=SIMBAD+search">Simbad</a>: A7V</p>
+<p>Classificazione <a href="https://vizier.cds.unistra.fr/viz-bin/VizieR-S?HR%20%205350">Bright Star Catalogue</a>: A9V</p>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ba35c3ef">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="Osservazioni">Osservazioni<a class="anchor-link" href="#Osservazioni">¶</a></h2>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=151f23f0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
 <ul>
-<li><a href="Arcturus.html">Arcturus - Alpha Boo</a></li>
-<li><a href="Iota_Boo.html">Iota Boo</a></li>
-<li><a href="Kappa2_Boo.html">Kappa 2 Boo</a></li>
+<li><a href="../../Osservazioni/20251010/Iota_Boo/Iota_Boo.html">10/10/2025</a></li>
 </ul>
 </div>
 </div>

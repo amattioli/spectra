@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Index</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>spectral_lines_labeler</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7511,68 +7511,1010 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=0f5c1539">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-0">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Osservazioni-del-04/11/2025">Osservazioni del 04/11/2025<a class="anchor-link" href="#Osservazioni-del-04/11/2025">¶</a></h1>
+<h1 id="Spectral-Feature-Labeler-%E2%80%94-species-&amp;-rest-wavelength-identification">Spectral Feature Labeler — species &amp; rest-wavelength identification<a class="anchor-link" href="#Spectral-Feature-Labeler-%E2%80%94-species-&amp;-rest-wavelength-identification">¶</a></h1><p>Takes the feature list produced by <code>spectral_lines_finder_2.ipynb</code> (wavelength, amplitude, FWHM
+per detected/deblended feature) and attaches <strong>2–3 candidate atomic-species labels</strong> (4 in
+extreme cases) to each feature, using a stellar-parameter-dependent line list instead of a
+generic static database.</p>
+<p><strong>Why not just match against VALD/NIST directly?</strong> At R≈850 a "feature" is almost always a blend
+of several real transitions, and <em>which one dominates</em> depends on the star's Teff/log g/abundances
+— a hot B star and a cool F supergiant will have completely different dominant contributors at the
+same wavelength window. A generic line list has no way to know that. VALD's <strong>"Extract Stellar"</strong>
+mode does: you give it Teff/log g/[Fe/H]/vmic and it returns each line's <em>expected central depth</em>
+for that specific star, computed under LTE from a real model atmosphere — exactly the ranking
+signal we need.</p>
+<p><strong>Runs 100% natively on Windows 11</strong> — no compiled radiative-transfer code, no WSL, no Linux.
+Everything here is plain Python (numpy / scipy / pandas / matplotlib / astropy), all of which ship
+as prebuilt Windows wheels:</p>
+<pre><code>pip install numpy scipy pandas matplotlib astropy
+</code></pre>
+<h2 id="Before-running-this-notebook:-get-a-VALD-%22Extract-Stellar%22-line-list">Before running this notebook: get a VALD "Extract Stellar" line list<a class="anchor-link" href="#Before-running-this-notebook:-get-a-VALD-%22Extract-Stellar%22-line-list">¶</a></h2><ol>
+<li>Register (free) at <strong><a href="http://vald.astro.uu.se">http://vald.astro.uu.se</a></strong>.</li>
+<li>Log in → <strong>Extract Stellar</strong>.</li>
+<li>Fill in:<ul>
+<li><strong>Starting / ending wavelength</strong>: cover your spectrum's full range (e.g. 3600–6900 Å).</li>
+<li><strong>Teff / log g / [Fe/H] / microturbulence</strong>: your best estimate for the target star
+(a rough spectral-type-calibration value is fine — this drives <em>relative</em> line-depth
+ranking, not a precision abundance analysis).</li>
+<li><strong>Detection threshold</strong>: ~0.01 (keeps weak lines that can still matter in a blend).</li>
+<li><strong>Line list format</strong>: long format, with central depths included.</li>
+</ul>
+</li>
+<li>Submit — VALD emails you a <code>.gz</code>/<code>.txt</code> result file. Save the <strong>long-format data file</strong>
+(not the reference/bibliography file) somewhere on disk and point <code>VALD_FILE</code> at it below.</li>
+</ol>
+<p>If you don't have a file yet, leave <code>USE_DEMO_VALD = True</code> — the notebook will use a small
+hand-built example line list so you can verify the whole pipeline runs before plugging in a
+real VALD extraction. <strong>Labels produced in demo mode are illustrative only, not real IDs.</strong></p>
+<p>Pick a Teff appropriate to the star's class — as a rough guide from the stars tested so far in
+this project: B3 IV ≈ 17500 K, B9 III ≈ 10000 K, A1 III-IV ≈ 9000 K, F8 Iab ≈ 6100 K. You can
+cross-check your labeled output against known bright-star spectra at
+<strong><a href="https://amattioli.github.io/spectra/Index.html">https://amattioli.github.io/spectra/Index.html</a></strong> as a sanity check (it won't give you
+per-line species IDs, but it's a good "does this look like a normal star of this class" check).</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cell-1">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">fits</span>
+
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">'display.max_rows'</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">'display.width'</span><span class="p">,</span> <span class="mi">140</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'Imports OK — numpy'</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">__version__</span><span class="p">,</span> <span class="s1">'| pandas'</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+</pre></div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1d4dc75a">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Setup">Setup<a class="anchor-link" href="#Setup">¶</a></h2>
+<h2 id="1-%C2%B7-Configuration">1 · Configuration<a class="anchor-link" href="#1-%C2%B7-Configuration">¶</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cell-3">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># ── Inputs ──────────────────────────────────────────────────────────────────</span>
+<span class="n">FEATURES_CSV</span>   <span class="o">=</span> <span class="s1">'delta_del_features.csv'</span>                              <span class="c1"># output of spectral_lines_finder_2.ipynb</span>
+<span class="n">SPEC_FITS_RECT</span> <span class="o">=</span> <span class="s1">'_deltadel_20251104_752-rect.fit'</span>      <span class="c1"># normalised spectrum (for plotting only)</span>
+
+<span class="n">USE_DEMO_VALD</span>  <span class="o">=</span> <span class="kc">False</span>     <span class="c1"># ← set False once you have a real VALD Extract Stellar file</span>
+<span class="n">VALD_FILE</span>      <span class="o">=</span> <span class="s1">'delta_del_vald_3.txt'</span>   <span class="c1"># ← path to your downloaded VALD long-format file</span>
+
+<span class="c1"># ── Star parameters (must match what you requested from VALD) ───────────────</span>
+<span class="n">TEFF</span>   <span class="o">=</span> <span class="mi">7440</span>    <span class="c1"># K   — effective temperature used for the VALD Extract Stellar request</span>
+<span class="n">VMIC</span>   <span class="o">=</span> <span class="mf">2.0</span>      <span class="c1"># km/s — microturbulence used for the VALD Extract Stellar request</span>
+<span class="n">R_SPEC</span> <span class="o">=</span> <span class="mi">850</span>      <span class="c1"># resolving power of the observed spectrum (Alpy 600 @ ASI533MM Pro ≈ 850)</span>
+<span class="n">VSINI</span>  <span class="o">=</span> <span class="mf">17.0</span>     <span class="c1"># km/s — projected rotational velocity, if known; 0 if unknown/negligible</span>
+
+<span class="c1"># ── Labeling parameters (all tunable) ────────────────────────────────────────</span>
+<span class="n">WINDOW_NFWHM</span>       <span class="o">=</span> <span class="mf">2.5</span>    <span class="c1"># candidate VALD lines are searched within ± WINDOW_NFWHM × feature FWHM of its center</span>
+<span class="n">MAX_LABELS</span>         <span class="o">=</span> <span class="mi">3</span>      <span class="c1"># normal cap on number of species labels per feature</span>
+<span class="n">MAX_LABELS_EXTREME</span> <span class="o">=</span> <span class="mi">4</span>      <span class="c1"># hard ceiling, used only when contributions are near-tied</span>
+<span class="n">MIN_CONTRIB_FRAC</span>   <span class="o">=</span> <span class="mf">0.25</span>   <span class="c1"># once the cumulative target below is met, drop any straggler line that</span>
+                             <span class="c1"># individually explains less than this fraction of the blend on its own</span>
+<span class="n">TOP_CONTRIB_MIN_FRAC</span>   <span class="o">=</span> <span class="mf">0.15</span>   <span class="c1"># if even the SINGLE strongest line in a window explains less than this,</span>
+                                 <span class="c1"># the feature is a genuine many-line forest with no dominant contributor --</span>
+                                 <span class="c1"># naming 2-3 "the" species would be arbitrary, so it's reported honestly as</span>
+                                 <span class="c1"># an unresolved blend instead of forced into labels</span>
+<span class="n">CUMULATIVE_CONTRIB_TARGET</span> <span class="o">=</span> <span class="mf">0.65</span>   <span class="c1"># keep adding contributors, strongest first, until they cumulatively</span>
+                                    <span class="c1"># explain at least this fraction of the total modeled blend depth</span>
+<span class="n">MIN_CONFIRM_FRAC</span>   <span class="o">=</span> <span class="mf">0.35</span>   <span class="c1"># modeled/observed depth ratio below this → discard as uncertain (leave unlabeled)</span>
+<span class="n">MAX_CONFIRM_FRAC</span>   <span class="o">=</span> <span class="mf">25.0</span>    <span class="c1"># modeled/observed depth ratio above this → discard as uncertain (over-predicted, likely wrong Teff or missing lines)</span>
+<span class="n">AIR_WAVELENGTHS</span>    <span class="o">=</span> <span class="kc">True</span>   <span class="c1"># VALD's default (&gt;2000 Å) and standard ground-based spectrograph calibration — leave True unless you requested vacuum</span>
+
+<span class="n">BALMER_LINES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"Hα"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">6562.8</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"Hβ"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">4861.4</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"Hγ"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">4340.5</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"Hδ"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">4101.7</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"Hε"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">3970.1</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"H-8"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">3889.0</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"H-9"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">3835.4</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"H-10"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">3797.9</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"H-11"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">3770.6</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"H-12"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">3750.2</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"H-13"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">3734.4</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"H-14"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">3721.9</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"H-15"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">3712.0</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"H-16"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">3703.9</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"name"</span><span class="p">:</span><span class="s2">"H-17"</span><span class="p">,</span> <span class="s2">"wl"</span><span class="p">:</span><span class="mf">3697.2</span><span class="p">}</span>
+<span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Teff=</span><span class="si">{</span><span class="n">TEFF</span><span class="si">}</span><span class="s1"> K   vmic=</span><span class="si">{</span><span class="n">VMIC</span><span class="si">}</span><span class="s1"> km/s   R=</span><span class="si">{</span><span class="n">R_SPEC</span><span class="si">}</span><span class="s1">   vsini=</span><span class="si">{</span><span class="n">VSINI</span><span class="si">}</span><span class="s1"> km/s'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Window: ±</span><span class="si">{</span><span class="n">WINDOW_NFWHM</span><span class="si">}</span><span class="s1">×FWHM   Confirm range: [</span><span class="si">{</span><span class="n">MIN_CONFIRM_FRAC</span><span class="si">}</span><span class="s1">, </span><span class="si">{</span><span class="n">MAX_CONFIRM_FRAC</span><span class="si">}</span><span class="s1">]× observed depth'</span><span class="p">)</span>
+</pre></div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=2704ddc3">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-4">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="2-%C2%B7-Load-the-detected-feature-list">2 · Load the detected-feature list<a class="anchor-link" href="#2-%C2%B7-Load-the-detected-feature-list">¶</a></h2><p>Reads the CSV produced by <code>spectral_lines_finder_2.ipynb</code> (columns:
+<code>wavelength_A, amplitude, fwhm_A, profile, source, balmer_name, tag</code>).</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cell-5">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">features</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">FEATURES_CSV</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8-sig'</span><span class="p">)</span>
+<span class="n">features</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">features</span><span class="o">.</span><span class="n">columns</span><span class="p">]</span>
+<span class="n">required</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'wavelength_A'</span><span class="p">,</span> <span class="s1">'amplitude'</span><span class="p">,</span> <span class="s1">'fwhm_A'</span><span class="p">,</span> <span class="s1">'tag'</span><span class="p">}</span>
+<span class="n">missing</span> <span class="o">=</span> <span class="n">required</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">missing</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Features CSV is missing expected column(s): </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s1">. '</span>
+                      <span class="sa">f</span><span class="s1">'Found columns: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Loaded </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span><span class="si">}</span><span class="s1"> features from </span><span class="si">{</span><span class="n">FEATURES_CSV</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  Balmer : </span><span class="si">{</span><span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">tag</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">"Balmer"</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  Other  : </span><span class="si">{</span><span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">tag</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="s2">"other"</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="n">features</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-6">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="3-%C2%B7-Load-the-VALD-%22Extract-Stellar%22-line-list">3 · Load the VALD "Extract Stellar" line list<a class="anchor-link" href="#3-%C2%B7-Load-the-VALD-%22Extract-Stellar%22-line-list">¶</a></h2><p>VALD's raw export mixes a header block, the data rows, and a bibliography footer, with slight
+format variations between requests. The parser below auto-detects the header row (looks for a
+column named like <code>WL_air</code>/<code>WL_vac</code>/<code>Wavelength</code>) and the <code>Central depth</code> column, then extracts
+every data row matching the <code>'Elm Ion', wavelength, ...</code> pattern. If your file doesn't parse
+cleanly, the diagnostic printout below will show exactly what was (and wasn't) recognized —
+adjust <code>MANUAL_COLUMN_MAP</code> in that case (see the fallback cell).</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cell-7">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Demo line list (used only when USE_DEMO_VALD = True) -- real rest wavelengths for real</span>
+<span class="c1"># transitions, but illustrative placeholder depths, NOT a real LTE calculation for any</span>
+<span class="c1"># specific Teff. Do not use these labels as genuine line identifications. Formatted to match</span>
+<span class="c1"># VALD Extract Stellar's real 14-field layout (species, WL_air, log gf*, E_low, J_lo, E_up,</span>
+<span class="c1"># J_up, lower/upper/mean Lande, Rad/Stark/Waals damping, Central depth) so the demo exercises</span>
+<span class="c1"># the exact same parsing path as a real download -- Lande/damping placeholders use VALD's own</span>
+<span class="c1"># convention for "not available" (99.000 / 0.000).</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_demo_vald_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"Elm Ion       WL_air(A)   log gf*  E_low(eV) J lo  E_up(eV)  J up  lower  "</span>
+              <span class="s2">"upper   mean   Rad.   Stark  Waals  depth</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">rows</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">"'H 1',   4101.734, -2.845, 10.199, 1.0, 13.221, 2.0, 99.000, 99.000, 99.000, 8.400, -4.061, 0.000, 0.550,"</span><span class="p">,</span>
+        <span class="s2">"'H 1',   4340.472, -2.548, 10.199, 1.0, 13.055, 2.0, 99.000, 99.000, 99.000, 8.400, -4.161, 0.000, 0.520,"</span><span class="p">,</span>
+        <span class="s2">"'H 1',   4861.350, -2.302, 10.199, 1.0, 12.749, 2.0, 99.000, 99.000, 99.000, 8.370, -4.261, 0.000, 0.480,"</span><span class="p">,</span>
+        <span class="s2">"'H 1',   6562.797, -1.342, 10.199, 1.0, 12.088, 2.0, 99.000, 99.000, 99.000, 8.766, -4.522, 0.000, 0.550,"</span><span class="p">,</span>
+        <span class="s2">"'Ca 2',  3933.663,  0.105,  0.000, 0.5,  3.151, 1.5, 1.200, 0.870, 1.040, 8.410, -5.550, -7.220, 0.750,"</span><span class="p">,</span>
+        <span class="s2">"'Ca 2',  3968.469, -0.166,  0.000, 0.5,  3.123, 0.5, 1.200, 1.200, 1.200, 8.410, -5.550, -7.220, 0.600,"</span><span class="p">,</span>
+        <span class="s2">"'Ca 1',  4226.728,  0.244,  0.000, 1.0,  2.933, 1.0, 0.000, 1.000, 0.500, 8.230, -5.680, -7.520, 0.180,"</span><span class="p">,</span>
+        <span class="s2">"'Sr 2',  4077.709,  0.146,  0.000, 0.5,  3.041, 1.5, 1.200, 0.870, 1.040, 8.550, -5.700, -7.300, 0.090,"</span><span class="p">,</span>
+        <span class="s2">"'Si 2',  4128.054,  0.359,  9.837, 0.5, 12.842, 1.5, 0.670, 1.330, 1.000, 8.800, -5.640, -7.500, 0.060,"</span><span class="p">,</span>
+        <span class="s2">"'Si 2',  4130.872,  0.633,  9.837, 0.5, 12.839, 0.5, 0.670, 0.670, 0.670, 8.800, -5.640, -7.500, 0.070,"</span><span class="p">,</span>
+        <span class="s2">"'Mg 2',  4481.126,  0.749,  8.864, 2.5, 11.632, 1.5, 1.200, 0.800, 1.000, 8.860, -5.630, -7.390, 0.070,"</span><span class="p">,</span>
+        <span class="s2">"'Mg 2',  4481.325, -0.560,  8.864, 1.5, 11.632, 1.5, 1.330, 0.800, 1.070, 8.860, -5.630, -7.390, 0.030,"</span><span class="p">,</span>
+        <span class="s2">"'Fe 1',  4045.812,  0.280,  1.485, 3.0,  4.549, 4.0, 1.480, 1.200, 1.340, 7.870, -6.160, -7.330, 0.140,"</span><span class="p">,</span>
+        <span class="s2">"'Fe 1',  4271.760, -0.164,  1.485, 3.0,  4.388, 3.0, 1.480, 1.500, 1.490, 7.870, -6.160, -7.330, 0.120,"</span><span class="p">,</span>
+        <span class="s2">"'Fe 1',  4383.545,  0.200,  1.485, 3.0,  4.313, 4.0, 1.480, 1.200, 1.340, 7.870, -6.160, -7.330, 0.150,"</span><span class="p">,</span>
+        <span class="s2">"'Fe 2',  4923.927, -1.320,  2.891, 3.5,  5.408, 4.5, 0.960, 1.400, 1.180, 8.720, -6.160, -7.330, 0.090,"</span><span class="p">,</span>
+        <span class="s2">"'Ti 2',  4300.049,  0.270,  1.180, 2.5,  4.063, 3.5, 1.100, 1.180, 1.140, 8.100, -6.020, -7.400, 0.060,"</span><span class="p">,</span>
+        <span class="s2">"'CH 1',  4300.500, -1.500,  0.520, 0.0,  3.402, 1.0, 99.000, 99.000, 99.000, 0.000, 0.000, 0.000, 0.200,"</span><span class="p">,</span>
+        <span class="s2">"'Na 1',  5889.951,  0.108,  0.000, 0.5,  2.104, 1.5, 1.200, 0.670, 0.930, 7.980, -5.610, -7.360, 0.200,"</span><span class="p">,</span>
+        <span class="s2">"'Na 1',  5895.924, -0.194,  0.000, 0.5,  2.104, 0.5, 1.200, 1.330, 1.270, 7.980, -5.610, -7.360, 0.150,"</span><span class="p">,</span>
+        <span class="s2">"'He 1',  4471.479,  0.006, 20.964, 2.0, 23.736, 1.0, 99.000, 99.000, 99.000, 0.000, -3.690, 0.000, 0.400,"</span><span class="p">,</span>
+        <span class="s2">"'He 1',  4026.190, -0.001, 20.964, 2.0, 23.343, 3.0, 99.000, 99.000, 99.000, 0.000, -3.690, 0.000, 0.350,"</span><span class="p">,</span>
+    <span class="p">]</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">'w'</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">header</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rows</span><span class="p">)</span> <span class="o">+</span> <span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="p">)</span>
+
+<span class="n">DATA_LINE_RE</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">"^\s*'([A-Za-z]{1,2})\s*(\d)'\s*,\s*([\d.]+)"</span><span class="p">)</span>
+
+<span class="c1"># VALD Extract Stellar's long-format data rows have a fixed, documented comma-separated</span>
+<span class="c1"># layout (confirmed against a real download): species, WL_air, log gf*, E_low, J_lo, E_up,</span>
+<span class="c1"># J_up, lower Lande, upper Lande, mean Lande, Rad damping, Stark damping, Waals damping,</span>
+<span class="c1"># Central depth[, ] -- 14 real fields plus a trailing comma. This is tried FIRST since it's</span>
+<span class="c1"># exact when it matches; the header-text search below is a fallback for files with a</span>
+<span class="c1"># different column count (e.g. a different VALD output mode).</span>
+<span class="n">KNOWN_LONG_FORMAT</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">wl_idx</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">loggf_idx</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">elow_idx</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">stark_idx</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">depth_idx</span><span class="o">=</span><span class="mi">13</span><span class="p">,</span> <span class="n">n_fields</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_try_known_long_format</span><span class="p">(</span><span class="n">data_lines</span><span class="p">):</span>
+    <span class="n">field_counts</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">l</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">','</span><span class="p">))</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="n">data_lines</span><span class="p">[:</span><span class="mi">50</span><span class="p">]]</span>
+    <span class="c1"># allow for the trailing empty field from the trailing comma (14 real + 1 empty = 15)</span>
+    <span class="k">if</span> <span class="n">field_counts</span> <span class="ow">and</span> <span class="nb">all</span><span class="p">(</span><span class="n">fc</span> <span class="ow">in</span> <span class="p">(</span><span class="n">KNOWN_LONG_FORMAT</span><span class="p">[</span><span class="s1">'n_fields'</span><span class="p">],</span> <span class="n">KNOWN_LONG_FORMAT</span><span class="p">[</span><span class="s1">'n_fields'</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                            <span class="k">for</span> <span class="n">fc</span> <span class="ow">in</span> <span class="n">field_counts</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">KNOWN_LONG_FORMAT</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+<span class="c1"># Fallback: locate the real column-header row by looking for VALD's specific WL_air/WL_vac</span>
+<span class="c1"># token FIRST (unambiguous), only falling back to the generic word 'Wavelength' if neither</span>
+<span class="c1"># is present -- some VALD files mention 'Wavelength region' in an earlier metadata line,</span>
+<span class="c1"># which would otherwise be matched first by mistake.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_header_text_search</span><span class="p">(</span><span class="n">raw_lines</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">pattern</span> <span class="ow">in</span> <span class="p">(</span><span class="sa">r</span><span class="s1">'WL_air|WL_vac'</span><span class="p">,</span> <span class="sa">r</span><span class="s1">'Wavelength'</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw_lines</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">pattern</span><span class="p">,</span> <span class="n">line</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">IGNORECASE</span><span class="p">):</span>
+                <span class="n">cols</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s1">'\s{2,}'</span><span class="p">,</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span>
+                <span class="k">return</span> <span class="n">i</span><span class="p">,</span> <span class="n">cols</span>
+    <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+<span class="c1"># VALD Extract-Stellar parser. Returns a DataFrame with columns</span>
+<span class="c1"># [element, ion, wavelength_A, depth, loggf, e_low].</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">parse_vald_file</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">raw_lines</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s1">'replace'</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+
+    <span class="n">data_line_idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw_lines</span><span class="p">)</span> <span class="k">if</span> <span class="n">DATA_LINE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">l</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">data_line_idx</span><span class="p">:</span>
+        <span class="n">preview</span> <span class="o">=</span> <span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">raw_lines</span><span class="p">[:</span><span class="mi">8</span><span class="p">])</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"No lines matched the expected VALD data-row pattern ('Elm Ion', wavelength, ...).</span><span class="se">\n</span><span class="s2">"</span>
+            <span class="s1">'First 8 lines of the file were:</span><span class="se">\n</span><span class="s1">'</span> <span class="o">+</span> <span class="n">preview</span> <span class="o">+</span>
+            <span class="s1">'</span><span class="se">\n\n</span><span class="s1">Use the manual-mapping fallback cell below instead.'</span>
+        <span class="p">)</span>
+    <span class="n">data_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">raw_lines</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">data_line_idx</span><span class="p">]</span>
+
+    <span class="n">layout</span> <span class="o">=</span> <span class="n">_try_known_long_format</span><span class="p">(</span><span class="n">data_lines</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">layout</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">wl_idx</span><span class="p">,</span> <span class="n">loggf_idx</span><span class="p">,</span> <span class="n">elow_idx</span><span class="p">,</span> <span class="n">depth_idx</span><span class="p">,</span> <span class="n">stark_idx</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">layout</span><span class="p">[</span><span class="s1">'wl_idx'</span><span class="p">],</span> <span class="n">layout</span><span class="p">[</span><span class="s1">'loggf_idx'</span><span class="p">],</span> <span class="n">layout</span><span class="p">[</span><span class="s1">'elow_idx'</span><span class="p">],</span>
+            <span class="n">layout</span><span class="p">[</span><span class="s1">'depth_idx'</span><span class="p">],</span> <span class="n">layout</span><span class="p">[</span><span class="s1">'stark_idx'</span><span class="p">])</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'Recognized VALD Extract Stellar long-format layout '</span>
+              <span class="sa">f</span><span class="s1">'(</span><span class="si">{</span><span class="n">layout</span><span class="p">[</span><span class="s2">"n_fields"</span><span class="p">]</span><span class="si">}</span><span class="s1"> fields/row, verified against </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data_lines</span><span class="p">)</span><span class="si">}</span><span class="s1"> data rows).'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  wavelength column index : </span><span class="si">{</span><span class="n">wl_idx</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  central depth column idx: </span><span class="si">{</span><span class="n">depth_idx</span><span class="si">}</span><span class="s1">  (FOUND -- using real Teff-dependent depths)'</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">header_idx</span><span class="p">,</span> <span class="n">header_cols</span> <span class="o">=</span> <span class="n">_header_text_search</span><span class="p">(</span><span class="n">raw_lines</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">header_idx</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">preview</span> <span class="o">=</span> <span class="s1">'</span><span class="se">\n</span><span class="s1">'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">raw_lines</span><span class="p">[:</span><span class="mi">8</span><span class="p">])</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s1">'Data rows were found, but their column count did not match the known VALD '</span>
+                <span class="s1">'long-format layout, and no header row could be located either.</span><span class="se">\n</span><span class="s1">'</span>
+                <span class="s1">'First 8 lines of the file were:</span><span class="se">\n</span><span class="s1">'</span> <span class="o">+</span> <span class="n">preview</span> <span class="o">+</span>
+                <span class="s1">'</span><span class="se">\n\n</span><span class="s1">Use the manual-mapping fallback cell below instead.'</span>
+            <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">find_col</span><span class="p">(</span><span class="n">cols</span><span class="p">,</span> <span class="o">*</span><span class="n">keywords</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cols</span><span class="p">):</span>
+                <span class="n">cl</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="n">cl</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keywords</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">i</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">wl_idx</span>    <span class="o">=</span> <span class="n">find_col</span><span class="p">(</span><span class="n">header_cols</span><span class="p">,</span> <span class="s1">'wl'</span><span class="p">)</span> <span class="ow">or</span> <span class="n">find_col</span><span class="p">(</span><span class="n">header_cols</span><span class="p">,</span> <span class="s1">'wavelength'</span><span class="p">)</span>
+        <span class="n">depth_idx</span> <span class="o">=</span> <span class="n">find_col</span><span class="p">(</span><span class="n">header_cols</span><span class="p">,</span> <span class="s1">'depth'</span><span class="p">)</span>
+        <span class="n">loggf_idx</span> <span class="o">=</span> <span class="n">find_col</span><span class="p">(</span><span class="n">header_cols</span><span class="p">,</span> <span class="s1">'gf'</span><span class="p">)</span>
+        <span class="n">elow_idx</span>  <span class="o">=</span> <span class="n">find_col</span><span class="p">(</span><span class="n">header_cols</span><span class="p">,</span> <span class="s1">'e_low'</span><span class="p">)</span> <span class="ow">or</span> <span class="n">find_col</span><span class="p">(</span><span class="n">header_cols</span><span class="p">,</span> <span class="s1">'low'</span><span class="p">)</span>
+        <span class="n">stark_idx</span> <span class="o">=</span> <span class="n">find_col</span><span class="p">(</span><span class="n">header_cols</span><span class="p">,</span> <span class="s1">'stark'</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'Column count did not match the known long-format layout -- fell back to '</span>
+              <span class="s1">'header-text search.'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'Detected header columns:'</span><span class="p">,</span> <span class="n">header_cols</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  wavelength column index : </span><span class="si">{</span><span class="n">wl_idx</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+        <span class="n">depth_note</span> <span class="o">=</span> <span class="s1">'(FOUND -- using real Teff-dependent depths)'</span> <span class="k">if</span> <span class="n">depth_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> \
+            <span class="k">else</span> <span class="s1">'(NOT FOUND -- will fall back to a log gf / E_low proxy, see warning below)'</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  central depth column idx: </span><span class="si">{</span><span class="n">depth_idx</span><span class="si">}</span><span class="s1">  </span><span class="si">{</span><span class="n">depth_note</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+    <span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">data_lines</span><span class="p">:</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">DATA_LINE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="n">elm</span><span class="p">,</span> <span class="n">ion</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"'"</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">'"'</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">','</span><span class="p">)]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">wl</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">wl_idx</span><span class="p">])</span> <span class="k">if</span> <span class="n">wl_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">depth</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">depth_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">depth</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">depth_idx</span><span class="p">])</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">):</span>
+                <span class="n">depth</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">loggf</span> <span class="o">=</span> <span class="n">elow</span> <span class="o">=</span> <span class="n">stark</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">loggf_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">loggf</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">loggf_idx</span><span class="p">])</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">):</span>
+                <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">elow_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">elow</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">elow_idx</span><span class="p">])</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">):</span>
+                <span class="k">pass</span>
+        <span class="k">if</span> <span class="n">stark_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">stark</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">stark_idx</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">stark</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">:</span>
+                    <span class="n">stark</span> <span class="o">=</span> <span class="kc">None</span>   <span class="c1"># VALD's sentinel for "not computed for this line"</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">):</span>
+                <span class="k">pass</span>
+        <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">element</span><span class="o">=</span><span class="n">elm</span><span class="p">,</span> <span class="n">ion</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">ion</span><span class="p">),</span> <span class="n">wavelength_A</span><span class="o">=</span><span class="n">wl</span><span class="p">,</span>
+                            <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span> <span class="n">loggf</span><span class="o">=</span><span class="n">loggf</span><span class="p">,</span> <span class="n">e_low</span><span class="o">=</span><span class="n">elow</span><span class="p">,</span> <span class="n">log_stark</span><span class="o">=</span><span class="n">stark</span><span class="p">))</span>
+
+    <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">df</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">'No data rows could be parsed into numeric fields. '</span>
+                          <span class="s1">'See the manual-mapping fallback cell.'</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">df</span><span class="p">[</span><span class="s1">'depth'</span><span class="p">]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'WARNING: no Central depth column found in this file -- VALD Extract Stellar'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'should include one. Falling back to a Boltzmann-weighted log gf / E_low proxy,'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'which does NOT account for element abundance or ionization balance and will'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'be unreliable for ranking lines of DIFFERENT species against each other.'</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">'Re-check that you used Extract Stellar (not Extract Element/All) on VALD.'</span><span class="p">)</span>
+        <span class="n">k_eV</span> <span class="o">=</span> <span class="mf">8.617333e-5</span>  <span class="c1"># eV/K</span>
+        <span class="n">gf</span> <span class="o">=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'loggf'</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span><span class="p">)</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">10</span> <span class="o">**</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">boltz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">df</span><span class="p">[</span><span class="s1">'e_low'</span><span class="p">]</span><span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">k_eV</span> <span class="o">*</span> <span class="n">TEFF</span><span class="p">))</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">'depth'</span><span class="p">]</span> <span class="o">=</span> <span class="n">gf</span> <span class="o">*</span> <span class="n">boltz</span>
+        <span class="n">df</span><span class="p">[</span><span class="s1">'depth'</span><span class="p">]</span> <span class="o">/=</span> <span class="n">df</span><span class="p">[</span><span class="s1">'depth'</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Parsed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">df</span><span class="p">)</span><span class="si">}</span><span class="s1"> VALD lines spanning </span><span class="si">{</span><span class="n">df</span><span class="o">.</span><span class="n">wavelength_A</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">df</span><span class="o">.</span><span class="n">wavelength_A</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> A'</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">df</span>
+
+<span class="k">if</span> <span class="n">USE_DEMO_VALD</span><span class="p">:</span>
+    <span class="n">demo_path</span> <span class="o">=</span> <span class="s1">'DEMO_vald_extract_stellar.txt'</span>
+    <span class="n">make_demo_vald_file</span><span class="p">(</span><span class="n">demo_path</span><span class="p">)</span>
+    <span class="n">VALD_FILE</span> <span class="o">=</span> <span class="n">demo_path</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'USE_DEMO_VALD=True -- wrote a small illustrative line list to </span><span class="si">{</span><span class="n">demo_path</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'Replace with a real VALD Extract Stellar download and set USE_DEMO_VALD=False for real IDs.'</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">()</span>
+
+<span class="n">vald</span> <span class="o">=</span> <span class="n">parse_vald_file</span><span class="p">(</span><span class="n">VALD_FILE</span><span class="p">)</span>
+<span class="n">vald</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-8">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h3 id="3b-%C2%B7-Manual-column-mapping-fallback">3b · Manual column-mapping fallback<a class="anchor-link" href="#3b-%C2%B7-Manual-column-mapping-fallback">¶</a></h3><p>If the parser above raised an error because your VALD file's header doesn't match the expected
+keywords, fill in the column <em>positions</em> (0-indexed, counting from the start of a data row) by
+hand here and re-run this cell instead of the one above.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cell-9">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">MANUAL_COLUMN_MAP</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="c1"># Example -- uncomment and adjust if the automatic parser failed:</span>
+<span class="c1"># MANUAL_COLUMN_MAP = dict(wl_idx=1, depth_idx=9, loggf_idx=2, elow_idx=3)</span>
+
+<span class="k">if</span> <span class="n">MANUAL_COLUMN_MAP</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">raw_lines</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">VALD_FILE</span><span class="p">)</span><span class="o">.</span><span class="n">read_text</span><span class="p">(</span><span class="n">errors</span><span class="o">=</span><span class="s1">'replace'</span><span class="p">)</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()</span>
+    <span class="n">records</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">raw_lines</span><span class="p">:</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">DATA_LINE_RE</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">m</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">elm</span><span class="p">,</span> <span class="n">ion</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">m</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">"'</span><span class="se">\"</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">','</span><span class="p">)]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">wl</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">MANUAL_COLUMN_MAP</span><span class="p">[</span><span class="s1">'wl_idx'</span><span class="p">]])</span>
+            <span class="n">depth</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">fields</span><span class="p">[</span><span class="n">MANUAL_COLUMN_MAP</span><span class="p">[</span><span class="s1">'depth_idx'</span><span class="p">]])</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">IndexError</span><span class="p">,</span> <span class="ne">KeyError</span><span class="p">):</span>
+            <span class="k">continue</span>
+        <span class="n">records</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">element</span><span class="o">=</span><span class="n">elm</span><span class="p">,</span> <span class="n">ion</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">ion</span><span class="p">),</span> <span class="n">wavelength_A</span><span class="o">=</span><span class="n">wl</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="n">depth</span><span class="p">,</span>
+                            <span class="n">loggf</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">e_low</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">log_stark</span><span class="o">=</span><span class="kc">None</span><span class="p">))</span>
+    <span class="n">vald</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">records</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Manually parsed </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">vald</span><span class="p">)</span><span class="si">}</span><span class="s1"> VALD lines.'</span><span class="p">)</span>
+    <span class="n">display</span><span class="p">(</span><span class="n">vald</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'Manual mapping not used (automatic parser succeeded above).'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-10">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="4-%C2%B7-Labeling-algorithm">4 · Labeling algorithm<a class="anchor-link" href="#4-%C2%B7-Labeling-algorithm">¶</a></h2><p>For each detected feature (center λ₀, FWHM from the deblending fit):</p>
+<ol>
+<li>Build the <strong>instrumental+rotational broadening</strong> σ_broad combining the instrument
+(<code>λ₀ / (R × 2.3548)</code>) and rotation (<code>λ₀ × vsini / c / 2.3548</code>, added in quadrature) — the
+same physical broadening that produced the feature's own fitted width.</li>
+<li>Collect every VALD line within <code>± WINDOW_NFWHM × FWHM</code> of λ₀.</li>
+<li><strong>Dilute each candidate's intrinsic depth for the loss of resolution.</strong> VALD's central
+depth is the line's <em>intrinsic</em> depth at essentially infinite resolving power. At R≈850 a
+narrow intrinsic line gets smeared across a much wider instrumental profile, which reduces
+its <em>peak</em> depth substantially — equivalent width is conserved, peak depth is not. Each
+candidate is modeled as a Gaussian with its own intrinsic width σᵢ (thermal Doppler for
+that element at <code>TEFF</code>, combined with <code>VMIC</code>), convolved with the instrumental+rotational
+Gaussian: the combined width is <code>σ_total = sqrt(σᵢ² + σ_broad²)</code>, and the peak is diluted
+by the ratio <code>σᵢ / σ_total</code>. Skipping this step was the single biggest source of error
+found while testing this notebook against ι Her — it made every strong line look 5–15×
+deeper than observed.</li>
+<li><strong>Combine contributions in optical-depth space, not depth space.</strong> VALD also lists each
+fine-structure/multiplet component of a transition as a separate line — e.g. He I 4471 is
+really 6 separate VALD entries within 0.2 Å of each other. Real absorption saturates
+(optical depths add; depths themselves don't), so each candidate's diluted, offset-weighted
+contribution is expressed as an optical depth τᵢ, all τᵢ are summed, and only then converted
+back to a predicted blend depth via <code>1 − exp(−Στᵢ)</code>.</li>
+<li>Compare the predicted blend depth against the feature's <em>observed</em> fitted amplitude:<ul>
+<li>if the ratio falls outside <code>[MIN_CONFIRM_FRAC, MAX_CONFIRM_FRAC]</code>, the identification is
+<strong>discarded</strong> (left unlabeled) — the candidate lines don't actually explain what was
+observed, so guessing would be worse than saying nothing.</li>
+<li>otherwise, rank candidates by their individual τ-contribution fraction and keep the top
+<code>MAX_LABELS</code> (or up to <code>MAX_LABELS_EXTREME</code> only when several contributions are close to
+tied at the cutoff), each contributing at least <code>MIN_CONTRIB_FRAC</code> of the total.</li>
+</ul>
+</li>
+</ol>
+<p>This is a simplified single-line-list synthesis, not a full radiative-transfer spectrum — it's
+good enough for <em>ranking which known transitions dominate a blend</em>, which is the actual question
+being asked, without needing a compiled synthesis code.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cell-11">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">C_KMS</span> <span class="o">=</span> <span class="mf">299792.458</span>
+
+<span class="c1"># Approximate atomic masses (amu) for the elements/molecules that typically show up in an</span>
+<span class="c1"># optical VALD Extract Stellar list. Unlisted species fall back to a generic mid-weight</span>
+<span class="c1"># metal mass -- this only affects the thermal-broadening estimate, which is a minor</span>
+<span class="c1"># correction next to microturbulence and instrumental broadening for anything heavier</span>
+<span class="c1"># than He.</span>
+<span class="n">ATOMIC_MASS_AMU</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'H'</span><span class="p">:</span> <span class="mf">1.008</span><span class="p">,</span> <span class="s1">'He'</span><span class="p">:</span> <span class="mf">4.003</span><span class="p">,</span> <span class="s1">'Li'</span><span class="p">:</span> <span class="mf">6.94</span><span class="p">,</span> <span class="s1">'C'</span><span class="p">:</span> <span class="mf">12.011</span><span class="p">,</span> <span class="s1">'N'</span><span class="p">:</span> <span class="mf">14.007</span><span class="p">,</span> <span class="s1">'O'</span><span class="p">:</span> <span class="mf">15.999</span><span class="p">,</span>
+    <span class="s1">'Ne'</span><span class="p">:</span> <span class="mf">20.180</span><span class="p">,</span> <span class="s1">'Na'</span><span class="p">:</span> <span class="mf">22.990</span><span class="p">,</span> <span class="s1">'Mg'</span><span class="p">:</span> <span class="mf">24.305</span><span class="p">,</span> <span class="s1">'Al'</span><span class="p">:</span> <span class="mf">26.982</span><span class="p">,</span> <span class="s1">'Si'</span><span class="p">:</span> <span class="mf">28.085</span><span class="p">,</span> <span class="s1">'P'</span><span class="p">:</span> <span class="mf">30.974</span><span class="p">,</span>
+    <span class="s1">'S'</span><span class="p">:</span> <span class="mf">32.06</span><span class="p">,</span> <span class="s1">'Cl'</span><span class="p">:</span> <span class="mf">35.45</span><span class="p">,</span> <span class="s1">'Ar'</span><span class="p">:</span> <span class="mf">39.948</span><span class="p">,</span> <span class="s1">'K'</span><span class="p">:</span> <span class="mf">39.098</span><span class="p">,</span> <span class="s1">'Ca'</span><span class="p">:</span> <span class="mf">40.078</span><span class="p">,</span> <span class="s1">'Sc'</span><span class="p">:</span> <span class="mf">44.956</span><span class="p">,</span>
+    <span class="s1">'Ti'</span><span class="p">:</span> <span class="mf">47.867</span><span class="p">,</span> <span class="s1">'V'</span><span class="p">:</span> <span class="mf">50.942</span><span class="p">,</span> <span class="s1">'Cr'</span><span class="p">:</span> <span class="mf">51.996</span><span class="p">,</span> <span class="s1">'Mn'</span><span class="p">:</span> <span class="mf">54.938</span><span class="p">,</span> <span class="s1">'Fe'</span><span class="p">:</span> <span class="mf">55.845</span><span class="p">,</span> <span class="s1">'Co'</span><span class="p">:</span> <span class="mf">58.933</span><span class="p">,</span>
+    <span class="s1">'Ni'</span><span class="p">:</span> <span class="mf">58.693</span><span class="p">,</span> <span class="s1">'Cu'</span><span class="p">:</span> <span class="mf">63.546</span><span class="p">,</span> <span class="s1">'Zn'</span><span class="p">:</span> <span class="mf">65.38</span><span class="p">,</span> <span class="s1">'Sr'</span><span class="p">:</span> <span class="mf">87.62</span><span class="p">,</span> <span class="s1">'Y'</span><span class="p">:</span> <span class="mf">88.906</span><span class="p">,</span> <span class="s1">'Zr'</span><span class="p">:</span> <span class="mf">91.224</span><span class="p">,</span>
+    <span class="s1">'Ba'</span><span class="p">:</span> <span class="mf">137.327</span><span class="p">,</span> <span class="s1">'CH'</span><span class="p">:</span> <span class="mf">13.02</span><span class="p">,</span> <span class="s1">'CN'</span><span class="p">:</span> <span class="mf">26.02</span><span class="p">,</span> <span class="s1">'CO'</span><span class="p">:</span> <span class="mf">28.01</span><span class="p">,</span> <span class="s1">'OH'</span><span class="p">:</span> <span class="mf">17.01</span><span class="p">,</span> <span class="s1">'TiO'</span><span class="p">:</span> <span class="mf">63.87</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">K_BOLTZ_ERG</span> <span class="o">=</span> <span class="mf">1.380649e-16</span>   <span class="c1"># erg/K</span>
+<span class="n">AMU_G</span>       <span class="o">=</span> <span class="mf">1.66053906660e-24</span>  <span class="c1"># g</span>
+
+<span class="c1"># Pure thermal-Doppler broadening under-predicts real He I line depths in hot (O/B) star</span>
+<span class="c1"># atmospheres: He I's excited-state transitions are Stark-broadened by the photosphere's</span>
+<span class="c1"># free electrons on top of thermal motion, and that extra width isn't optional -- without</span>
+<span class="c1"># it, real strong He I lines get diluted below their observed depth and wrongly discarded</span>
+<span class="c1"># as unconfirmed. Two more "correct" approaches were tried and abandoned first: (1) VALD's</span>
+<span class="c1"># own per-line Stark damping constant converted via the standard Ne &amp; (T/10000)^(1/6)</span>
+<span class="c1"># scaling needed a ~1000x different assumed electron density for He I 6678 than for</span>
+<span class="c1"># 4121/4471 to land in range, meaning that simple scaling isn't trustworthy across</span>
+<span class="c1"># different He I transitions; (2) an uncalibrated flat floor (0.4 A) confirmed 6678 only by</span>
+<span class="c1"># accidentally over-shooting 4121 past the confirmation ceiling. The value below is instead</span>
+<span class="c1"># calibrated directly against six known He I lines in iota Her (4009, 4121, 4388, 4471,</span>
+<span class="c1"># 4922, 6678 A) to find the floor that confirms as many as possible without over-shooting</span>
+<span class="c1"># any of them -- 0.37 A does that for five of six, with comfortable margin on both sides</span>
+<span class="c1"># (4388 was borderline at 0.35 A and needed this small bump once the closer-feature</span>
+<span class="c1"># exclusion in this cell started correctly discounting a couple of its more distant, weak</span>
+<span class="c1"># VALD contributors). 6678 A remains genuinely unconfirmed at any floor value tried (its</span>
+<span class="c1"># longer wavelength means thermal broadening alone already dominates its intrinsic width,</span>
+<span class="c1"># leaving little room for the floor to add leverage) -- a known, honest limitation of this</span>
+<span class="c1"># simplified approach rather than a bug.</span>
+<span class="n">NONTHERMAL_FWHM_FLOOR_A</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'He'</span><span class="p">:</span> <span class="mf">0.37</span><span class="p">}</span>   <span class="c1"># A, calibrated -- see note above; adjust and</span>
+                                          <span class="c1"># re-check against known lines if labeling a very</span>
+                                          <span class="c1"># different Teff regime</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">local_sigma_A</span><span class="p">(</span><span class="n">wl_center</span><span class="p">):</span>
+    <span class="n">sigma_inst</span> <span class="o">=</span> <span class="n">wl_center</span> <span class="o">/</span> <span class="p">(</span><span class="n">R_SPEC</span> <span class="o">*</span> <span class="mf">2.3548</span><span class="p">)</span>
+    <span class="n">sigma_rot</span>  <span class="o">=</span> <span class="n">wl_center</span> <span class="o">*</span> <span class="p">(</span><span class="n">VSINI</span> <span class="o">/</span> <span class="n">C_KMS</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.3548</span> <span class="k">if</span> <span class="n">VSINI</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">sigma_inst</span><span class="p">,</span> <span class="n">sigma_rot</span><span class="p">))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">intrinsic_sigma_A</span><span class="p">(</span><span class="n">wl</span><span class="p">,</span> <span class="n">element</span><span class="p">,</span> <span class="n">log_stark</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Thermal (Teff, per-element mass) + microturbulent Doppler width, plus a calibrated</span>
+<span class="sd">    non-thermal floor for Stark-prone species (currently just He I), as a Gaussian sigma in</span>
+<span class="sd">    Angstrom -- the star's own line width before instrumental broadening. The `log_stark`</span>
+<span class="sd">    argument is accepted (and ignored) so the call site doesn't need to change if a</span>
+<span class="sd">    per-line Stark treatment is revisited later -- see the note on NONTHERMAL_FWHM_FLOOR_A</span>
+<span class="sd">    above for why that approach was tried and abandoned."""</span>
+    <span class="n">mass_g</span> <span class="o">=</span> <span class="n">ATOMIC_MASS_AMU</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="mf">40.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">AMU_G</span>
+    <span class="n">v_th_kms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">K_BOLTZ_ERG</span> <span class="o">*</span> <span class="n">TEFF</span> <span class="o">/</span> <span class="n">mass_g</span><span class="p">)</span> <span class="o">/</span> <span class="mf">1e5</span>
+    <span class="n">b_kms</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">v_th_kms</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">VMIC</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">sigma_kms</span> <span class="o">=</span> <span class="n">b_kms</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">sigma_thermal_A</span> <span class="o">=</span> <span class="n">wl</span> <span class="o">*</span> <span class="n">sigma_kms</span> <span class="o">/</span> <span class="n">C_KMS</span>
+    <span class="n">floor_A</span> <span class="o">=</span> <span class="n">NONTHERMAL_FWHM_FLOOR_A</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.3548</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">hypot</span><span class="p">(</span><span class="n">sigma_thermal_A</span><span class="p">,</span> <span class="n">floor_A</span><span class="p">))</span>
+
+<span class="c1"># Each candidate VALD line is only counted for a feature if THIS feature's own measured</span>
+<span class="c1"># center is at least as close to it as any OTHER already-detected feature's center (among</span>
+<span class="c1"># those whose own search window would also reach it). Otherwise a different feature is the</span>
+<span class="c1"># more natural match, and counting the same physical line for both would double-count it --</span>
+<span class="c1"># this is what caused a residual component next to Hbeta to also claim "H I 4861", when</span>
+<span class="c1"># Hbeta's own dedicated row is clearly the better match. Deliberately NOT based on species</span>
+<span class="c1"># identity or any notebook-1 tag (e.g. tag=='Balmer'): that tag only reflects a fitting-</span>
+<span class="c1"># profile decision in notebook 1, not a verified species ID -- if BALMER_LINES there is ever</span>
+<span class="c1"># extended to include something like Ca II H/K for a cool star's profile fitting, trusting</span>
+<span class="c1"># that tag here would silently mislabel calcium as hydrogen. Using only each feature's own</span>
+<span class="c1"># measured (wavelength, FWHM) instead makes this rule correct regardless of what notebook 1's</span>
+<span class="c1"># BALMER_LINES dict does or doesn't contain.</span>
+<span class="n">FEATURE_CENTERS_FWHM</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">features</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">],</span> <span class="n">features</span><span class="p">[</span><span class="s1">'fwhm_A'</span><span class="p">]))</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">label_feature</span><span class="p">(</span><span class="n">wl_center</span><span class="p">,</span> <span class="n">fwhm_obs</span><span class="p">,</span> <span class="n">amp_obs</span><span class="p">):</span>
+    <span class="n">sigma_broad</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">local_sigma_A</span><span class="p">(</span><span class="n">wl_center</span><span class="p">),</span> <span class="n">fwhm_obs</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="mf">2.3548</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span>
+    <span class="n">half_window</span> <span class="o">=</span> <span class="n">WINDOW_NFWHM</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">fwhm_obs</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
+    <span class="n">cand</span> <span class="o">=</span> <span class="n">vald</span><span class="p">[(</span><span class="n">vald</span><span class="o">.</span><span class="n">wavelength_A</span> <span class="o">&gt;=</span> <span class="n">wl_center</span> <span class="o">-</span> <span class="n">half_window</span><span class="p">)</span> <span class="o">&amp;</span>
+                <span class="p">(</span><span class="n">vald</span><span class="o">.</span><span class="n">wavelength_A</span> <span class="o">&lt;=</span> <span class="n">wl_center</span> <span class="o">+</span> <span class="n">half_window</span><span class="p">)]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cand</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_claimed_by_a_closer_feature</span><span class="p">(</span><span class="n">vald_wl</span><span class="p">):</span>
+            <span class="n">d_mine</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">vald_wl</span> <span class="o">-</span> <span class="n">wl_center</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">other_center</span><span class="p">,</span> <span class="n">other_fwhm</span> <span class="ow">in</span> <span class="n">FEATURE_CENTERS_FWHM</span><span class="p">:</span>
+                <span class="n">d_other</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">vald_wl</span> <span class="o">-</span> <span class="n">other_center</span><span class="p">)</span>
+                <span class="n">other_half_window</span> <span class="o">=</span> <span class="n">WINDOW_NFWHM</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">other_fwhm</span><span class="p">,</span> <span class="mf">1e-3</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">d_other</span> <span class="o">&lt;</span> <span class="n">d_mine</span> <span class="ow">and</span> <span class="n">d_other</span> <span class="o">&lt;=</span> <span class="n">other_half_window</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">True</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">cand</span> <span class="o">=</span> <span class="n">cand</span><span class="p">[</span><span class="o">~</span><span class="n">cand</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">_claimed_by_a_closer_feature</span><span class="p">)]</span>
+    <span class="k">if</span> <span class="n">cand</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">n_lines_found</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">predicted_depth</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">confirmed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">labels</span><span class="o">=</span><span class="p">[],</span> <span class="n">contributions</span><span class="o">=</span><span class="p">[],</span> <span class="n">discard_reason</span><span class="o">=</span><span class="s1">'No candidates in window'</span><span class="p">)</span>
+
+    <span class="c1"># VALD's central depth is the line's INTRINSIC depth at essentially infinite resolving</span>
+    <span class="c1"># power -- at R=850 a narrow intrinsic line is diluted across a much wider instrumental</span>
+    <span class="c1"># profile, which reduces its PEAK depth substantially (equivalent width is conserved,</span>
+    <span class="c1"># peak depth is not). Model each candidate as a Gaussian of its own intrinsic width,</span>
+    <span class="c1"># convolved with the instrumental+rotational Gaussian: the combined profile has</span>
+    <span class="c1"># sigma_total = sqrt(sigma_intrinsic^2 + sigma_broad^2), and its peak is diluted by the</span>
+    <span class="c1"># ratio sigma_intrinsic / sigma_total relative to the undiluted central depth.</span>
+    <span class="c1"># Contributions are then combined in optical-depth space so near-coincident</span>
+    <span class="c1"># multiplet/fine-structure components (VALD often lists several for one physical line)</span>
+    <span class="c1"># saturate realistically instead of adding past 100% absorption.</span>
+    <span class="n">sigma_i</span> <span class="o">=</span> <span class="n">cand</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">r</span><span class="p">:</span> <span class="n">intrinsic_sigma_A</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">],</span> <span class="n">r</span><span class="p">[</span><span class="s1">'element'</span><span class="p">],</span> <span class="n">r</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'log_stark'</span><span class="p">)),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">sigma_total</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sigma_i</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">sigma_broad</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">dilution</span> <span class="o">=</span> <span class="n">sigma_i</span> <span class="o">/</span> <span class="n">sigma_total</span>
+
+    <span class="n">depth_clipped</span> <span class="o">=</span> <span class="n">cand</span><span class="p">[</span><span class="s1">'depth'</span><span class="p">]</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">upper</span><span class="o">=</span><span class="mf">0.999</span><span class="p">)</span>
+    <span class="n">tau_center</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">depth_clipped</span><span class="p">)</span>
+    <span class="n">cand</span><span class="p">[</span><span class="s1">'tau_contribution'</span><span class="p">]</span> <span class="o">=</span> <span class="n">tau_center</span> <span class="o">*</span> <span class="n">dilution</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+        <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">wl_center</span> <span class="o">-</span> <span class="n">cand</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">])</span> <span class="o">/</span> <span class="n">sigma_total</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">total_tau</span> <span class="o">=</span> <span class="n">cand</span><span class="p">[</span><span class="s1">'tau_contribution'</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+    <span class="n">predicted_depth</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">total_tau</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">amp_obs</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">predicted_depth</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">ratio</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ratio</span> <span class="o">=</span> <span class="n">predicted_depth</span> <span class="o">/</span> <span class="n">amp_obs</span>
+    <span class="n">confirmed</span> <span class="o">=</span> <span class="n">MIN_CONFIRM_FRAC</span> <span class="o">&lt;=</span> <span class="n">ratio</span> <span class="o">&lt;=</span> <span class="n">MAX_CONFIRM_FRAC</span>
+    <span class="k">if</span> <span class="n">confirmed</span><span class="p">:</span>
+        <span class="n">discard_reason</span> <span class="o">=</span> <span class="s1">''</span>
+    <span class="k">elif</span> <span class="n">ratio</span> <span class="o">&lt;</span> <span class="n">MIN_CONFIRM_FRAC</span><span class="p">:</span>
+        <span class="n">discard_reason</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'confirm frac too low (</span><span class="si">{</span><span class="n">ratio</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">)'</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">discard_reason</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'confirm frac too high (</span><span class="si">{</span><span class="n">ratio</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">)'</span>
+
+    <span class="n">cand</span> <span class="o">=</span> <span class="n">cand</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">'tau_contribution'</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">cand</span><span class="p">[</span><span class="s1">'frac'</span><span class="p">]</span> <span class="o">=</span> <span class="n">cand</span><span class="p">[</span><span class="s1">'tau_contribution'</span><span class="p">]</span> <span class="o">/</span> <span class="n">total_tau</span> <span class="k">if</span> <span class="n">total_tau</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
+
+    <span class="c1"># collapse duplicate species+ion within this window (e.g. a close doublet, or the same</span>
+    <span class="c1"># multiplet's fine-structure components) into one label, keeping the strongest line's</span>
+    <span class="c1"># wavelength as the representative one</span>
+    <span class="n">seen</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">cand</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">row</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">row</span><span class="o">.</span><span class="n">ion</span><span class="p">,</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">]),</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">seen</span><span class="p">:</span>
+            <span class="n">seen</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">row</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">seen</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">seen</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">seen</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">'frac'</span><span class="p">]</span> <span class="o">+=</span> <span class="n">row</span><span class="p">[</span><span class="s1">'frac'</span><span class="p">]</span>
+    <span class="n">merged</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">seen</span><span class="o">.</span><span class="n">values</span><span class="p">())</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="s1">'frac'</span><span class="p">,</span> <span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="c1"># Dense blend regions (e.g. an Fe I/Ti II forest) routinely have HUNDREDS of VALD lines</span>
+    <span class="c1"># in one window, none of which individually explains a large share of the total modeled</span>
+    <span class="c1"># depth -- the blend as a whole matches the observed feature (confirmed=True), but no</span>
+    <span class="c1"># single line clears a fixed per-line threshold like the old MIN_CONTRIB_FRAC=0.35 did.</span>
+    <span class="c1"># Requiring that made every such feature come back with ZERO candidates even though it</span>
+    <span class="c1"># was confirmed. Instead: take the strongest lines, in order, until they CUMULATIVELY</span>
+    <span class="c1"># explain most of the blend (CUMULATIVE_CONTRIB_TARGET) -- this is what "2-3 dominant</span>
+    <span class="c1"># species" should mean for a real blend. If even the single strongest line doesn't clear</span>
+    <span class="c1"># TOP_CONTRIB_MIN_FRAC, there ISN'T a small set of dominant contributors -- it's a</span>
+    <span class="c1"># genuinely unresolved many-line forest, and forcing 2-3 names onto it would be</span>
+    <span class="c1"># arbitrary, so that case is flagged explicitly instead of silently guessing.</span>
+    <span class="n">merged_sorted</span> <span class="o">=</span> <span class="n">merged</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">top_frac</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">merged_sorted</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">'frac'</span><span class="p">])</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">merged_sorted</span><span class="o">.</span><span class="n">empty</span> <span class="k">else</span> <span class="mf">0.0</span>
+    <span class="n">blend_unresolved</span> <span class="o">=</span> <span class="n">top_frac</span> <span class="o">&lt;</span> <span class="n">TOP_CONTRIB_MIN_FRAC</span>
+
+    <span class="k">if</span> <span class="n">blend_unresolved</span><span class="p">:</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cum</span> <span class="o">=</span> <span class="n">merged_sorted</span><span class="p">[</span><span class="s1">'frac'</span><span class="p">]</span><span class="o">.</span><span class="n">cumsum</span><span class="p">()</span>
+        <span class="n">n_keep</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">cum</span> <span class="o">&lt;</span> <span class="n">CUMULATIVE_CONTRIB_TARGET</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span> <span class="o">+</span> <span class="mi">1</span>   <span class="c1"># include the line that crosses the target</span>
+        <span class="n">kept</span> <span class="o">=</span> <span class="n">merged_sorted</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="n">n_keep</span><span class="p">]</span>
+        <span class="n">kept</span> <span class="o">=</span> <span class="n">kept</span><span class="p">[</span><span class="n">kept</span><span class="p">[</span><span class="s1">'frac'</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">MIN_CONTRIB_FRAC</span><span class="p">]</span>   <span class="c1"># drop any negligible straggler pulled in near the target</span>
+        <span class="k">if</span> <span class="n">kept</span><span class="o">.</span><span class="n">empty</span><span class="p">:</span>
+            <span class="n">kept</span> <span class="o">=</span> <span class="n">merged_sorted</span><span class="o">.</span><span class="n">iloc</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>   <span class="c1"># always keep at least the single strongest line</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">element</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">ion</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">ion</span><span class="p">),</span>
+                           <span class="n">wavelength_A</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">]),</span> <span class="mi">2</span><span class="p">),</span>
+                           <span class="n">frac</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'frac'</span><span class="p">]),</span> <span class="mi">4</span><span class="p">))</span>
+                      <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">kept</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()]</span>
+
+    <span class="c1"># Full merged list, unfiltered -- kept so that Section 5 can (a) fall back to a feature's</span>
+    <span class="c1"># next-best line if every one of its qualifying candidates gets awarded to a stronger</span>
+    <span class="c1"># neighboring feature in the global conflict-resolution pass, and (b) inspect what an</span>
+    <span class="c1"># 'unresolved_blend' feature's top contributors were, even though none was used as a label.</span>
+    <span class="n">all_candidates</span> <span class="o">=</span> <span class="p">[</span><span class="nb">dict</span><span class="p">(</span><span class="n">element</span><span class="o">=</span><span class="n">r</span><span class="o">.</span><span class="n">element</span><span class="p">,</span> <span class="n">ion</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">ion</span><span class="p">),</span>
+                       <span class="n">wavelength_A</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">]),</span> <span class="mi">2</span><span class="p">),</span>
+                       <span class="n">frac</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'frac'</span><span class="p">]),</span> <span class="mi">4</span><span class="p">))</span>
+                  <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">merged_sorted</span><span class="o">.</span><span class="n">iterrows</span><span class="p">()]</span>
+
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">n_lines_found</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">cand</span><span class="p">),</span> <span class="n">predicted_depth</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">predicted_depth</span><span class="p">),</span> <span class="mi">4</span><span class="p">),</span>
+                <span class="n">confirmed</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">confirmed</span><span class="p">),</span> <span class="n">candidates</span><span class="o">=</span><span class="n">candidates</span><span class="p">,</span> <span class="n">all_candidates</span><span class="o">=</span><span class="n">all_candidates</span><span class="p">,</span>
+                <span class="n">blend_unresolved</span><span class="o">=</span><span class="nb">bool</span><span class="p">(</span><span class="n">blend_unresolved</span><span class="p">),</span> <span class="n">top_contrib_frac</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">top_frac</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+                <span class="n">discard_reason</span><span class="o">=</span><span class="n">discard_reason</span><span class="p">)</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'label_feature() ready.'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-12">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="5-%C2%B7-Apply-labeling-to-every-feature">5 · Apply labeling to every feature<a class="anchor-link" href="#5-%C2%B7-Apply-labeling-to-every-feature">¶</a></h2><p>Two passes:</p>
+<ol>
+<li><strong>Collect candidates.</strong> Every feature (Balmer and non-Balmer alike) gets its full ranked
+candidate list from <code>label_feature()</code> — every VALD line identity contributing at least
+<code>MIN_CONTRIB_FRAC</code>, not yet trimmed to <code>MAX_LABELS</code>.</li>
+<li><strong>Resolve global conflicts.</strong> When the deblending stage splits one physical absorption
+complex into several adjacent components (common in crowded regions like the near-UV
+Balmer/He I forest), each component's own search window can independently rediscover the
+<em>same</em> dominant VALD line — e.g. two different features both reporting "He I 4471" as
+their top contributor. Only one of them can physically be that transition, so each unique
+VALD line (species + ion + wavelength) is awarded to whichever feature has the strongest
+claim (highest contribution fraction) globally; every other feature loses that candidate
+and falls back to its next-best remaining one, or goes unlabeled if nothing is left.</li>
+</ol>
+<p>Only after this global resolution is each feature's list finally trimmed to <code>MAX_LABELS</code>
+(<code>MAX_LABELS_EXTREME</code> in near-tied cases).</p>
+<p>Two label columns are produced:</p>
 <ul>
-<li>Ottica: Celestron C8</li>
-<li>Montatura: iOptron CEM70</li>
-<li>Camera: ZWO ASI533MM Pro</li>
-<li>Guida: Alpy 600 guide module + ASI585MC</li>
-<li>Spettroscopio: Alpy 600 con fenditura da 10$\mu$m + modulo di calibrazione</li>
-<li>Luogo: Terrazzo lato Cominio</li>
+<li><strong><code>labels</code></strong> — the full, verbose form: one <code>"Element Ion wavelength"</code> entry per
+contributing line, comma-separated (e.g. <code>He I 4009.3</code>).</li>
+<li><strong><code>short_label</code></strong> — a compact form for annotating plots or atlases: species ordered by
+contribution and joined with <code>/</code>, followed by the combined wavelength span of every
+contributing line (any species) as a single Angstrom if the whole blend rounds inside one
+Angstrom, otherwise <code>start-end</code>, with <code>end</code> shortened to its last two digits when <code>start</code>
+and <code>end</code> share the same first two digits (<code>4129-31</code>) and written out in full when they
+don't (<code>5097-5101</code>). Balmer-tagged features always list hydrogen first, using its rest
+wavelength rather than the fitted center, since it's the dominant, defining line of that
+feature by construction.</li>
 </ul>
 </div>
 </div>
 </div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cell-13">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=09aa000c">
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># ── Pass 1: collect every feature's raw candidate list ──────────────────────────────────────</span>
+<span class="c1"># Every row is treated identically here, regardless of notebook 1's tag column -- see the</span>
+<span class="c1"># note in Section 4 on why tag=='Balmer' is not trusted as a species identification.</span>
+<span class="n">raw</span> <span class="o">=</span> <span class="p">[]</span>   <span class="c1"># one entry per row of `features`, in the same order</span>
+<span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">features</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">label_feature</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s1">'fwhm_A'</span><span class="p">],</span> <span class="n">row</span><span class="p">[</span><span class="s1">'amplitude'</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s1">'n_lines_found'</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">raw</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">'no_lines_in_window'</span><span class="p">,</span> <span class="n">candidates</span><span class="o">=</span><span class="p">[],</span> <span class="n">all_candidates</span><span class="o">=</span><span class="p">[],</span>
+                        <span class="n">n_lines_found</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">discard_reason</span><span class="o">=</span><span class="s1">''</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">r</span><span class="p">[</span><span class="s1">'confirmed'</span><span class="p">]:</span>
+        <span class="n">raw</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">'uncertain_discarded'</span><span class="p">,</span> <span class="n">candidates</span><span class="o">=</span><span class="p">[],</span> <span class="n">all_candidates</span><span class="o">=</span><span class="p">[],</span>
+                        <span class="n">n_lines_found</span><span class="o">=</span><span class="n">r</span><span class="p">[</span><span class="s1">'n_lines_found'</span><span class="p">],</span> <span class="n">discard_reason</span><span class="o">=</span><span class="n">r</span><span class="p">[</span><span class="s1">'discard_reason'</span><span class="p">]))</span>
+    <span class="k">elif</span> <span class="n">r</span><span class="p">[</span><span class="s1">'blend_unresolved'</span><span class="p">]:</span>
+        <span class="c1"># The blend as a whole matches the observed feature, but it's made of many</span>
+        <span class="c1"># comparably-weak lines with no small set of dominant contributors -- an honest</span>
+        <span class="c1"># "can't be reduced to 2-3 species" result, not a failed identification.</span>
+        <span class="n">raw</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">'unresolved_blend'</span><span class="p">,</span> <span class="n">candidates</span><span class="o">=</span><span class="p">[],</span> <span class="n">all_candidates</span><span class="o">=</span><span class="n">r</span><span class="p">[</span><span class="s1">'all_candidates'</span><span class="p">],</span>
+                        <span class="n">n_lines_found</span><span class="o">=</span><span class="n">r</span><span class="p">[</span><span class="s1">'n_lines_found'</span><span class="p">],</span>
+                        <span class="n">discard_reason</span><span class="o">=</span><span class="p">(</span><span class="sa">f</span><span class="s2">"blend of </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'n_lines_found'</span><span class="p">]</span><span class="si">}</span><span class="s2"> lines in window, "</span>
+                                        <span class="sa">f</span><span class="s2">"strongest explains only </span><span class="si">{</span><span class="n">r</span><span class="p">[</span><span class="s1">'top_contrib_frac'</span><span class="p">]</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">% "</span>
+                                        <span class="sa">f</span><span class="s2">"(&lt; </span><span class="si">{</span><span class="n">TOP_CONTRIB_MIN_FRAC</span><span class="o">*</span><span class="mi">100</span><span class="si">:</span><span class="s2">.0f</span><span class="si">}</span><span class="s2">% needed)"</span><span class="p">)))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">raw</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">status</span><span class="o">=</span><span class="s1">'confirmed'</span><span class="p">,</span> <span class="n">candidates</span><span class="o">=</span><span class="n">r</span><span class="p">[</span><span class="s1">'candidates'</span><span class="p">],</span> <span class="n">all_candidates</span><span class="o">=</span><span class="n">r</span><span class="p">[</span><span class="s1">'all_candidates'</span><span class="p">],</span>
+                        <span class="n">n_lines_found</span><span class="o">=</span><span class="n">r</span><span class="p">[</span><span class="s1">'n_lines_found'</span><span class="p">],</span> <span class="n">discard_reason</span><span class="o">=</span><span class="s1">''</span><span class="p">))</span>
+
+<span class="c1"># ── Pass 2: resolve conflicts globally ───────────────────────────────────────────────────────</span>
+<span class="c1"># claims[vald_line_id] = list of (feature_row_index, frac)</span>
+<span class="n">claims</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="s1">'candidates'</span><span class="p">]:</span>
+        <span class="n">vid</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s1">'element'</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="s1">'ion'</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">])</span>
+        <span class="n">claims</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">vid</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">c</span><span class="p">[</span><span class="s1">'frac'</span><span class="p">]))</span>
+
+<span class="n">winner_of</span> <span class="o">=</span> <span class="p">{</span><span class="n">vid</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">lst</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">t</span><span class="p">[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">vid</span><span class="p">,</span> <span class="n">lst</span> <span class="ow">in</span> <span class="n">claims</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lst</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">}</span>
+
+<span class="n">had_candidates</span> <span class="o">=</span> <span class="p">[</span><span class="nb">bool</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'candidates'</span><span class="p">])</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">]</span>   <span class="c1"># snapshot before this pass strips anything</span>
+
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw</span><span class="p">):</span>
+    <span class="n">kept</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="s1">'candidates'</span><span class="p">]:</span>
+        <span class="n">vid</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s1">'element'</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="s1">'ion'</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">vid</span> <span class="ow">in</span> <span class="n">winner_of</span> <span class="ow">and</span> <span class="n">winner_of</span><span class="p">[</span><span class="n">vid</span><span class="p">]</span> <span class="o">!=</span> <span class="n">i</span><span class="p">:</span>
+            <span class="k">continue</span>   <span class="c1"># a nearby feature has a stronger claim on this exact VALD line</span>
+        <span class="n">kept</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+    <span class="n">r</span><span class="p">[</span><span class="s1">'candidates'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">kept</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">'frac'</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># A feature that HAD qualifying candidates in Pass 1 but lost every single one of them to a</span>
+<span class="c1"># stronger neighboring claim just lost a tie-break -- it isn't the same as never having had a</span>
+<span class="c1"># candidate at all. Rather than silently leaving it 'confirmed' with no label (the previous</span>
+<span class="c1"># behavior), fall back to its next-best line(s) from the *unfiltered* merged list -- i.e. ones</span>
+<span class="c1"># that didn't individually clear MIN_CONTRIB_FRAC for this feature -- as long as that VALD line</span>
+<span class="c1"># isn't already the established, stronger property of another feature (checked the same way as</span>
+<span class="c1"># above). This is a lower-confidence identification than a normal confirmed match, so it gets</span>
+<span class="c1"># its own status rather than being folded back into 'confirmed' silently. If nothing usable</span>
+<span class="c1"># remains either, the feature is honestly reported as unlabeled instead of mislabeled.</span>
+<span class="n">FALLBACK_MIN_FRAC</span> <span class="o">=</span> <span class="mf">0.15</span>   <span class="c1"># floor below which a fallback label would be noise, not a real ID</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">r</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">had_candidates</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">r</span><span class="p">[</span><span class="s1">'candidates'</span><span class="p">]:</span>
+        <span class="n">fallback</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">r</span><span class="p">[</span><span class="s1">'all_candidates'</span><span class="p">]:</span>
+            <span class="n">vid</span> <span class="o">=</span> <span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s1">'element'</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="s1">'ion'</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">vid</span> <span class="ow">in</span> <span class="n">winner_of</span> <span class="ow">and</span> <span class="n">winner_of</span><span class="p">[</span><span class="n">vid</span><span class="p">]</span> <span class="o">!=</span> <span class="n">i</span><span class="p">:</span>
+                <span class="k">continue</span>   <span class="c1"># still someone else's stronger, established claim</span>
+            <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="s1">'frac'</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">FALLBACK_MIN_FRAC</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">fallback</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fallback</span><span class="p">:</span>
+            <span class="n">r</span><span class="p">[</span><span class="s1">'candidates'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">fallback</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="p">[</span><span class="s1">'frac'</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">r</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'confirmed_fallback'</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">r</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span> <span class="o">=</span> <span class="s1">'unlabeled_lost_to_neighbor'</span>
+
+<span class="c1"># ── Final per-feature trim to MAX_LABELS (MAX_LABELS_EXTREME on near-ties) ──────────────────</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_label</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+    <span class="n">roman</span> <span class="o">=</span> <span class="s1">'I'</span> <span class="o">*</span> <span class="n">c</span><span class="p">[</span><span class="s1">'ion'</span><span class="p">]</span> <span class="k">if</span> <span class="n">c</span><span class="p">[</span><span class="s1">'ion'</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="mi">3</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="s1">'ion'</span><span class="p">])</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="s1">'element'</span><span class="p">]</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">roman</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">c</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">"</span>
+
+<span class="n">roman_mapping</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="mi">0</span><span class="p">:</span> <span class="s2">""</span><span class="p">,</span> <span class="mi">1</span><span class="p">:</span> <span class="s2">"I"</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s2">"II"</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s2">"III"</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span> <span class="s2">"IV"</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="s2">"V"</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">:</span> <span class="s2">"VI"</span><span class="p">,</span> <span class="mi">7</span><span class="p">:</span> <span class="s2">"VII"</span><span class="p">,</span> <span class="mi">8</span><span class="p">:</span> <span class="s2">"VIII"</span><span class="p">,</span> <span class="mi">9</span><span class="p">:</span> <span class="s2">"IX"</span><span class="p">,</span> <span class="mi">10</span><span class="p">:</span> <span class="s2">"X"</span>
+    <span class="p">}</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">roman_ion</span><span class="p">(</span><span class="n">ion</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">roman_mapping</span><span class="p">[</span><span class="n">ion</span><span class="p">]</span>
+
+<span class="c1"># Return the name of the nearest balmer line to the specified wavelength</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">find_nearest_balmer</span><span class="p">(</span><span class="n">wl</span><span class="p">):</span>
+    <span class="n">min_dist</span> <span class="o">=</span> <span class="mi">10000</span>
+    <span class="n">found_name</span> <span class="o">=</span> <span class="s1">''</span>
+    <span class="k">for</span> <span class="n">balmer_line</span> <span class="ow">in</span> <span class="n">BALMER_LINES</span><span class="p">:</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">wl</span> <span class="o">-</span> <span class="n">balmer_line</span><span class="p">[</span><span class="s1">'wl'</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">dist</span> <span class="o">&lt;</span> <span class="n">min_dist</span><span class="p">:</span>
+            <span class="n">found_name</span> <span class="o">=</span> <span class="n">balmer_line</span><span class="p">[</span><span class="s1">'name'</span><span class="p">]</span>
+            <span class="n">min_dist</span> <span class="o">=</span> <span class="n">dist</span>
+    <span class="k">return</span> <span class="n">found_name</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">build_short_label</span><span class="p">(</span><span class="n">species_list</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""species_list: list of (element, ion, wavelength_A, frac) tuples -- one per</span>
+<span class="sd">    contributing line. Groups by species (summing frac across multiple lines of the same</span>
+<span class="sd">    species), orders species by total contribution (most prominent first), and formats the</span>
+<span class="sd">    combined wavelength span across ALL contributing lines (any species) per the rules:</span>
+<span class="sd">    a single number if the whole span rounds inside one Angstrom, otherwise</span>
+<span class="sd">    'start-end' with the end shortened to its last two digits when start and end share</span>
+<span class="sd">    the same first two digits (e.g. '4129-31'), else written out in full (e.g. '5097-5101').</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">species_list</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s1">''</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">elem</span><span class="p">,</span> <span class="n">ion</span><span class="p">,</span> <span class="n">wl</span><span class="p">,</span> <span class="n">frac</span> <span class="ow">in</span> <span class="n">species_list</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">elem</span> <span class="o">==</span> <span class="s1">'H'</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">find_nearest_balmer</span><span class="p">(</span><span class="n">wl</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">ion</span><span class="p">)</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">groups</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">frac</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">wls</span><span class="o">=</span><span class="p">[]))</span>
+        <span class="n">g</span><span class="p">[</span><span class="s1">'frac'</span><span class="p">]</span> <span class="o">+=</span> <span class="n">frac</span>
+        <span class="n">g</span><span class="p">[</span><span class="s1">'wls'</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">wl</span><span class="p">)</span>
+    <span class="n">ordered</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">groups</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="s1">'frac'</span><span class="p">],</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">species_part</span> <span class="o">=</span> <span class="s1">'/'</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">elem</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">roman_ion</span><span class="p">(</span><span class="n">ion</span><span class="p">)</span><span class="si">}</span><span class="s1">'</span> <span class="k">for</span> <span class="p">(</span><span class="n">elem</span><span class="p">,</span> <span class="n">ion</span><span class="p">),</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">ordered</span><span class="p">)</span>
+
+    <span class="n">all_wls</span> <span class="o">=</span> <span class="p">[</span><span class="n">wl</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">groups</span><span class="o">.</span><span class="n">values</span><span class="p">()</span> <span class="k">for</span> <span class="n">wl</span> <span class="ow">in</span> <span class="n">g</span><span class="p">[</span><span class="s1">'wls'</span><span class="p">]]</span>
+    <span class="n">lo</span><span class="p">,</span> <span class="n">hi</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">all_wls</span><span class="p">)),</span> <span class="nb">round</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">all_wls</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">lo</span> <span class="o">==</span> <span class="n">hi</span><span class="p">:</span>
+        <span class="n">wl_part</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">lo</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lo_s</span><span class="p">,</span> <span class="n">hi_s</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">lo</span><span class="p">),</span> <span class="nb">str</span><span class="p">(</span><span class="n">hi</span><span class="p">)</span>
+        <span class="n">wl_part</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">hi_s</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:]</span><span class="si">}</span><span class="s1">'</span> <span class="k">if</span> <span class="n">lo_s</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">hi_s</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span> <span class="k">else</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">lo</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">hi</span><span class="si">}</span><span class="s1">'</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">species_part</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">wl_part</span><span class="si">}</span><span class="s1">'</span>
+
+<span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">:</span>
+    <span class="n">cand</span> <span class="o">=</span> <span class="n">r</span><span class="p">[</span><span class="s1">'candidates'</span><span class="p">]</span>
+    <span class="n">cap</span> <span class="o">=</span> <span class="n">MAX_LABELS</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">cand</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_LABELS</span><span class="p">:</span>
+        <span class="n">f3</span> <span class="o">=</span> <span class="n">cand</span><span class="p">[</span><span class="n">MAX_LABELS</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="s1">'frac'</span><span class="p">]</span>
+        <span class="n">f4</span> <span class="o">=</span> <span class="n">cand</span><span class="p">[</span><span class="n">MAX_LABELS</span><span class="p">][</span><span class="s1">'frac'</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">f4</span> <span class="o">&gt;=</span> <span class="mf">0.85</span> <span class="o">*</span> <span class="n">f3</span><span class="p">:</span>
+            <span class="n">cap</span> <span class="o">=</span> <span class="n">MAX_LABELS_EXTREME</span>
+    <span class="n">trimmed</span> <span class="o">=</span> <span class="n">cand</span><span class="p">[:</span><span class="n">cap</span><span class="p">]</span>
+    <span class="n">r</span><span class="p">[</span><span class="s1">'final_labels'</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">format_label</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">trimmed</span><span class="p">]</span>
+    <span class="n">species_list</span> <span class="o">=</span> <span class="p">[(</span><span class="n">c</span><span class="p">[</span><span class="s1">'element'</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="s1">'ion'</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">],</span> <span class="n">c</span><span class="p">[</span><span class="s1">'frac'</span><span class="p">])</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">trimmed</span><span class="p">]</span>
+    <span class="n">r</span><span class="p">[</span><span class="s1">'short_label'</span><span class="p">]</span> <span class="o">=</span> <span class="n">build_short_label</span><span class="p">(</span><span class="n">species_list</span><span class="p">)</span>
+
+<span class="n">features</span><span class="p">[</span><span class="s1">'label_status'</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">'status'</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">]</span>
+<span class="n">features</span><span class="p">[</span><span class="s1">'discard_reason'</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">'discard_reason'</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">]</span>
+<span class="n">features</span><span class="p">[</span><span class="s1">'n_candidate_lines'</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">'n_lines_found'</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">]</span>
+<span class="n">features</span><span class="p">[</span><span class="s1">'labels'</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s1">'final_labels'</span><span class="p">])</span> <span class="k">if</span> <span class="n">r</span><span class="p">[</span><span class="s1">'final_labels'</span><span class="p">]</span> <span class="k">else</span> <span class="s1">''</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">]</span>
+<span class="n">features</span><span class="p">[</span><span class="s1">'short_label'</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="s1">'short_label'</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">]</span>
+<span class="n">features</span><span class="p">[</span><span class="s1">'rank'</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'A'</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">raw</span><span class="p">]</span>
+
+<span class="n">status_counts</span> <span class="o">=</span> <span class="n">features</span><span class="p">[</span><span class="s1">'label_status'</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">'Labeling summary:'</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">status</span><span class="p">,</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">status_counts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  </span><span class="si">{</span><span class="n">status</span><span class="si">:</span><span class="s1">22s</span><span class="si">}</span><span class="s1">: </span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="n">n_resolved</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">winner_of</span><span class="o">.</span><span class="n">values</span><span class="p">())</span> <span class="k">if</span> <span class="n">winner_of</span> <span class="k">else</span> <span class="mi">0</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="se">\n</span><span class="s1">Global conflicts resolved: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">winner_of</span><span class="p">)</span><span class="si">}</span><span class="s1"> VALD line(s) had competing claims from multiple features'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">()</span>
+<span class="n">features</span><span class="p">[[</span><span class="s1">'short_label'</span><span class="p">,</span> <span class="s1">'rank'</span><span class="p">,</span> <span class="s1">'wavelength_A'</span><span class="p">,</span> <span class="s1">'amplitude'</span><span class="p">,</span> <span class="s1">'fwhm_A'</span><span class="p">,</span> <span class="s1">'tag'</span><span class="p">,</span> <span class="s1">'label_status'</span><span class="p">,</span> <span class="s1">'discard_reason'</span><span class="p">,</span> <span class="s1">'labels'</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">30</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-14">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="Osservazioni">Osservazioni<a class="anchor-link" href="#Osservazioni">¶</a></h2>
+<h2 id="6-%C2%B7-Save-the-labeled-feature-list">6 · Save the labeled feature list<a class="anchor-link" href="#6-%C2%B7-Save-the-labeled-feature-list">¶</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cell-15">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">out_path</span> <span class="o">=</span> <span class="n">Path</span><span class="p">(</span><span class="n">FEATURES_CSV</span><span class="p">)</span><span class="o">.</span><span class="n">stem</span> <span class="o">+</span> <span class="s1">'_labeled.csv'</span>
+<span class="n">features</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="n">out_path</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s1">'utf-8-sig'</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">'short_label'</span><span class="p">,</span> <span class="s1">'rank'</span><span class="p">,</span> <span class="s1">'wavelength_A'</span><span class="p">,</span> <span class="s1">'amplitude'</span><span class="p">,</span> <span class="s1">'fwhm_A'</span><span class="p">,</span> <span class="s1">'tag'</span><span class="p">,</span> <span class="s1">'label_status'</span><span class="p">,</span> <span class="s1">'discard_reason'</span><span class="p">,</span> <span class="s1">'labels'</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Saved -&gt; </span><span class="si">{</span><span class="n">out_path</span><span class="si">}</span><span class="s1">  (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">features</span><span class="p">)</span><span class="si">}</span><span class="s1"> rows)'</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">USE_DEMO_VALD</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'Reminder: this run used the DEMO line list (USE_DEMO_VALD=True).'</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'Labels above are for pipeline verification only — replace with a real VALD'</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'Extract Stellar download and re-run for genuine identifications.'</span><span class="p">)</span>
+</pre></div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1c2b88b2">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cell-16">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li><a href="Alpha_Del/Alpha_Del.html">Alpha Del</a></li>
-<li><a href="Beta_Del/Beta_Del.html">Beta Del</a></li>
-<li><a href="Delta_Del/Delta_Del.html">Delta Del</a></li>
-</ul>
+<h2 id="7-%C2%B7-Visual-check">7 · Visual check<a class="anchor-link" href="#7-%C2%B7-Visual-check">¶</a></h2><p>Overlays the observed spectrum with the labeled features annotated, panel by panel, so you can
+eyeball whether the labels make physical sense (e.g. a labeled 'Ca 2' should sit on a genuinely
+deep, broad feature near 3934/3968 Å; a labeled 'Fe 1' in a forest region should be modest).</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=cell-17">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">hdul</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">SPEC_FITS_RECT</span><span class="p">)</span>
+<span class="n">flux</span> <span class="o">=</span> <span class="n">hdul</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<span class="n">hdr</span>  <span class="o">=</span> <span class="n">hdul</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
+<span class="n">wl</span>   <span class="o">=</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">'CRVAL1'</span><span class="p">]</span> <span class="o">+</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">'CDELT1'</span><span class="p">]</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">flux</span><span class="p">))</span>
+<span class="n">hdul</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="n">PANEL_WIDTH_A</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">lo_all</span><span class="p">,</span> <span class="n">hi_all</span> <span class="o">=</span> <span class="n">wl</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">wl</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+<span class="n">n_panels</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">hi_all</span> <span class="o">-</span> <span class="n">lo_all</span><span class="p">)</span> <span class="o">/</span> <span class="n">PANEL_WIDTH_A</span><span class="p">))</span>
+
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">n_panels</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mf">6.5</span> <span class="o">*</span> <span class="n">n_panels</span><span class="p">))</span>
+<span class="k">if</span> <span class="n">n_panels</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">axes</span> <span class="o">=</span> <span class="p">[</span><span class="n">axes</span><span class="p">]</span>
+
+<span class="k">for</span> <span class="n">p</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">axes</span><span class="p">):</span>
+    <span class="n">lo</span> <span class="o">=</span> <span class="n">lo_all</span> <span class="o">+</span> <span class="n">p</span> <span class="o">*</span> <span class="n">PANEL_WIDTH_A</span>
+    <span class="n">hi</span> <span class="o">=</span> <span class="n">lo</span> <span class="o">+</span> <span class="n">PANEL_WIDTH_A</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="p">(</span><span class="n">wl</span> <span class="o">&gt;=</span> <span class="n">lo</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">wl</span> <span class="o">&lt;=</span> <span class="n">hi</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wl</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">flux</span><span class="p">[</span><span class="n">m</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">'#2c3e50'</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">lo</span><span class="p">,</span> <span class="n">hi</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Norm. flux'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">tick_params</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="s1">'both'</span><span class="p">,</span> <span class="n">labelsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">grid</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+
+    <span class="n">sub</span> <span class="o">=</span> <span class="n">features</span><span class="p">[(</span><span class="n">features</span><span class="o">.</span><span class="n">wavelength_A</span> <span class="o">&gt;=</span> <span class="n">lo</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">wavelength_A</span> <span class="o">&lt;=</span> <span class="n">hi</span><span class="p">)</span> <span class="o">&amp;</span>
+                  <span class="p">(</span><span class="n">features</span><span class="o">.</span><span class="n">labels</span> <span class="o">!=</span> <span class="s1">''</span><span class="p">)]</span>
+    <span class="c1"># Extra vertical room above/below the trace for the larger, rotated annotation text so</span>
+    <span class="c1"># labels don't run off the panel or collide with the curve itself.</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="o">-</span><span class="mf">0.35</span><span class="p">,</span> <span class="mf">1.30</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">sub</span><span class="o">.</span><span class="n">iterrows</span><span class="p">():</span>
+        <span class="n">color</span> <span class="o">=</span> <span class="s1">'#c0392b'</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s1">'tag'</span><span class="p">]</span> <span class="o">==</span> <span class="s1">'Balmer'</span> <span class="k">else</span> <span class="s1">'#2471a3'</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span> <span class="n">lw</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">'--'</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">'short_label'</span><span class="p">],</span> <span class="n">xy</span><span class="o">=</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s1">'wavelength_A'</span><span class="p">],</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">row</span><span class="p">[</span><span class="s1">'amplitude'</span><span class="p">]),</span>
+                    <span class="n">xytext</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">18</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s1">'tag'</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">'Balmer'</span> <span class="k">else</span> <span class="mi">18</span><span class="p">),</span>
+                    <span class="n">textcoords</span><span class="o">=</span><span class="s1">'offset points'</span><span class="p">,</span> <span class="n">rotation</span><span class="o">=</span><span class="mi">90</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span>
+                    <span class="n">ha</span><span class="o">=</span><span class="s1">'center'</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">'top'</span> <span class="k">if</span> <span class="n">row</span><span class="p">[</span><span class="s1">'tag'</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">'Balmer'</span> <span class="k">else</span> <span class="s1">'bottom'</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
+
+<span class="n">axes</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'Wavelength (A)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Labeled features  ·  Teff=</span><span class="si">{</span><span class="n">TEFF</span><span class="si">}</span><span class="s1"> K  ·  </span><span class="si">{</span><span class="s2">"DEMO line list"</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">USE_DEMO_VALD</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="n">Path</span><span class="p">(</span><span class="n">VALD_FILE</span><span class="p">)</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+             <span class="n">fontsize</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
 </div>
 </div>
 </div>

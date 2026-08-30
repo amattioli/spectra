@@ -3,7 +3,7 @@
 <html lang="en">
 <head><meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-<title>Index</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
+<title>spectral_noise</title><script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.10/require.min.js"></script>
 <style type="text/css">
     pre { line-height: 125%; }
 td.linenos .normal { color: inherit; background-color: transparent; padding-left: 5px; padding-right: 5px; }
@@ -7511,236 +7511,865 @@ a.anchor-link {
 <!-- End of mermaid configuration --></head>
 <body class="jp-Notebook" data-jp-theme-light="true" data-jp-theme-name="JupyterLab Light">
 <main>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=016050b8">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a3fce8c2">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h1 id="Classe-A">Classe A<a class="anchor-link" href="#Classe-A">¶</a></h1>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=1f09b905">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="A0">A0<a class="anchor-link" href="#A0">¶</a></h2>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=4c4d0593">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h1 id="Spectral-Noise-&amp;-Systematic-Error-Estimation">Spectral Noise &amp; Systematic Error Estimation<a class="anchor-link" href="#Spectral-Noise-&amp;-Systematic-Error-Estimation">¶</a></h1><p><strong>Purpose:</strong> estimate the random (photon/read) noise and the continuum-normalisation
+systematic error for a rectified stellar spectrum, and write out a <strong>single FITS
+file containing both the spectrum and its wavelength-dependent 1σ error bars</strong>.</p>
+<p><strong>Output (<code>OUTPUT_FITS_FILE</code>)</strong> — a 2-HDU FITS file:</p>
 <ul>
-<li><a href="../../Costellazioni/Camelopardalis/CE_Cam.html">CE Camelopardalis</a> A0Ia</li>
-<li><a href="../../Costellazioni/Pegasus/Markab.html">Markab - Alpha Peg</a> A0IV</li>
-<li><a href="../../Costellazioni/Lyra/Vega.html">Vega</a> A0Va</li>
-<li><a href="../../Costellazioni/Camelopardalis/HR2209.html">HR 2209</a> A0Vn</li>
-<li><a href="../../Costellazioni/Auriga/Theta_Aur.html">Theta Aur</a> A0VpSi</li>
-<li><a href="../../Costellazioni/Canes_Venatici/Cor_Caroli.html">Cor Caroli</a> A0VpSiEu</li>
+<li><strong>Primary HDU</strong> — continuum-normalised flux, same WCS (<code>CRVAL1</code>/<code>CDELT1</code>/<code>CRPIX1</code>) and
+identifying header keywords (<code>OBJNAME</code>/<code>OBJECT</code>, <code>DATE-OBS</code>, …) as the input rectified
+spectrum, restricted to <code>WL_MIN</code>–<code>WL_MAX</code>.</li>
+<li><strong><code>ERR</code> extension</strong> — the combined 1σ uncertainty on the flux (photon/read noise plus,
+optionally, the continuum-placement systematic), on the same wavelength grid.</li>
+<li>Header keyword <strong><code>NOISELVL</code></strong> — the scalar reference-window noise level, kept for
+downstream code that still wants a single number (e.g. a prominence floor).</li>
 </ul>
+<p>Run this notebook <strong>before</strong> <code>spectral_lines_finder.ipynb</code>. That notebook no longer
+recomputes noise itself — it loads <code>OUTPUT_FITS_FILE</code> directly and reads the spectrum
+and its error bars straight out of the FITS file.</p>
+<hr/>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=79eb35d6">
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=62f49066">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="A1">A1<a class="anchor-link" href="#A1">¶</a></h2>
+<h2 id="0-%C2%B7-Imports-&amp;-configuration">0 · Imports &amp; configuration<a class="anchor-link" href="#0-%C2%B7-Imports-&amp;-configuration">¶</a></h2>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=7864bddf">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.pyplot</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">plt</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">matplotlib.ticker</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">ticker</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">astropy.io</span><span class="w"> </span><span class="kn">import</span> <span class="n">fits</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">'figure.dpi'</span><span class="p">]</span>       <span class="o">=</span> <span class="mi">130</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">'axes.grid'</span><span class="p">]</span>         <span class="o">=</span> <span class="kc">True</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">'grid.alpha'</span><span class="p">]</span>        <span class="o">=</span> <span class="mf">0.4</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">'grid.linestyle'</span><span class="p">]</span>    <span class="o">=</span> <span class="s1">'--'</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">'grid.linewidth'</span><span class="p">]</span>    <span class="o">=</span> <span class="mf">0.4</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">'font.size'</span><span class="p">]</span>         <span class="o">=</span> <span class="mi">13</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">'axes.titlesize'</span><span class="p">]</span>    <span class="o">=</span> <span class="mi">13</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">'axes.labelsize'</span><span class="p">]</span>    <span class="o">=</span> <span class="mi">13</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">'xtick.labelsize'</span><span class="p">]</span>   <span class="o">=</span> <span class="mi">11</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">'ytick.labelsize'</span><span class="p">]</span>   <span class="o">=</span> <span class="mi">11</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">'legend.fontsize'</span><span class="p">]</span>   <span class="o">=</span> <span class="mi">11</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s1">'figure.titlesize'</span><span class="p">]</span>  <span class="o">=</span> <span class="mi">14</span>
+
+<span class="c1"># ── Input files ─────────────────────────────────────────────────────────────</span>
+<span class="n">FITS_FILE</span>     <span class="o">=</span> <span class="s1">'_markb_20251111_721-rect.fit'</span>  <span class="c1"># ← normalised (rectified) spectrum</span>
+<span class="n">RAW_FITS_FILE</span> <span class="o">=</span> <span class="s1">'_markb_20251111_721.fit'</span>        <span class="c1"># ← pre-normalisation (for noise scaling)</span>
+
+<span class="c1"># ── Output file ───────────────────────────────────────────────────────────────</span>
+<span class="c1"># Combined spectrum + error-bar FITS file. This is what spectral_lines_finder.ipynb</span>
+<span class="c1"># reads instead of FITS_FILE / RAW_FITS_FILE.</span>
+<span class="n">OUTPUT_FITS_FILE</span> <span class="o">=</span> <span class="s1">'_markb_20251111_721-spectrum-with-errors.fit'</span>
+
+<span class="c1"># ── Wavelength range ────────────────────────────────────────────────────────</span>
+<span class="c1"># Set to None to use the full range stored in the FITS file.</span>
+<span class="c1"># Units: Ångström</span>
+<span class="n">WL_MIN</span> <span class="o">=</span> <span class="mi">3700</span>   <span class="c1"># e.g. 3700  |  None → use file start</span>
+<span class="n">WL_MAX</span> <span class="o">=</span> <span class="mi">6800</span>   <span class="c1"># e.g. 6750  |  None → use file end</span>
+
+<span class="c1"># ── Noise estimation window ──────────────────────────────────────────────────</span>
+<span class="c1"># Choose a genuinely line-free continuum window for the star's spectral class.</span>
+<span class="c1"># The window must be free of absorption lines AND diffuse interstellar bands</span>
+<span class="c1"># (DIBs); contamination inflates the noise estimate and suppresses detections.</span>
+<span class="c1">#</span>
+<span class="c1"># Recommended windows by spectral class:</span>
+<span class="c1">#</span>
+<span class="c1">#   O / early B  : 5750–5850 Å  (few metallic lines; avoid He I 5876)</span>
+<span class="c1">#   late B       : 5750–5850 Å  or  6050–6150 Å</span>
+<span class="c1">#   A normal     : 6050–6150 Å  (avoid Na D 5890/5896 and dense Fe II forest</span>
+<span class="c1">#                                 around 5780 Å which includes a strong DIB)</span>
+<span class="c1">#   A supergiant : 6700–6800 Å  (5750-5850 Å is contaminated by the rich</span>
+<span class="c1">#                                 metallic spectrum; use the red wing between</span>
+<span class="c1">#                                 Hα 6563 and the red edge)</span>
+<span class="c1">#   F / G        : 6100–6200 Å  (redder and cleaner than the dense green-blue)</span>
+<span class="c1">#</span>
+<span class="c1"># Quick sanity check: after loading, plot the flux in this window and verify</span>
+<span class="c1"># it shows only Gaussian scatter with no obvious dips or trends.</span>
+<span class="c1"># A good window has std/mean &lt; 0.01 and no pixel deviating more than 3σ.</span>
+<span class="n">NOISE_WL_MIN</span> <span class="o">=</span> <span class="mi">5720</span>   <span class="c1"># Å — start of line-free window  ← adjust per spectral class</span>
+<span class="n">NOISE_WL_MAX</span> <span class="o">=</span> <span class="mi">5820</span>   <span class="c1"># Å — end   of line-free window  ← adjust per spectral class</span>
+
+<span class="c1"># ── Noise rescaling ──────────────────────────────────────────────────────────</span>
+<span class="c1"># Box width used to smooth the raw spectrum into a coarse continuum shape.</span>
+<span class="c1"># Needs to be wide enough to wash out individual lines (~20 Å FWHM at R=850)</span>
+<span class="c1"># but not so wide that it misses the broad instrumental response curve.</span>
+<span class="c1"># 200 Å is a safe default; reduce to 100 Å if the response varies sharply.</span>
+<span class="n">NOISE_SMOOTH_WIDTH_A</span> <span class="o">=</span> <span class="mi">200</span>  <span class="c1"># A</span>
+
+<span class="c1"># Power-law exponent relating noise to relative sensitivity S(λ):</span>
+<span class="c1">#   noise(λ) = NOISE_LEVEL / S(λ)**NOISE_SCALING_POWER</span>
+<span class="c1"># 0.5 = photon (Poisson/shot) noise -- absolute noise ∝ sqrt(counts), so</span>
+<span class="c1">#       fractional noise after normalising ∝ 1/sqrt(counts). Correct default</span>
+<span class="c1">#       whenever counting statistics dominate (the normal case at SNR ≳ 100).</span>
+<span class="c1"># 1.0 = old linear behaviour -- only correct if a wavelength-independent</span>
+<span class="c1">#       additive noise floor (read noise, dark current) dominates over shot</span>
+<span class="c1">#       noise, which is unusual at these signal levels.</span>
+<span class="n">NOISE_SCALING_POWER</span> <span class="o">=</span> <span class="mf">0.5</span>   <span class="c1"># 0.5 (Poisson, recommended) | 1.0 (old linear)</span>
+
+<span class="c1"># ── Continuum-normalisation systematic error ──────────────────────────────────</span>
+<span class="c1"># The rectified spectrum (FITS_FILE) was produced by dividing the raw</span>
+<span class="c1"># spectrum by a continuum traced *manually* (an arbitrary interpolation</span>
+<span class="c1"># through hand-picked anchor points). That continuum estimate carries its</span>
+<span class="c1"># own placement error, on top of the random photon/read noise already</span>
+<span class="c1"># estimated above -- and this systematic term is often what actually shows</span>
+<span class="c1"># up as spurious "features" in the wings of broad lines (e.g. Balmer),</span>
+<span class="c1"># where a slightly mismatched continuum leaves a broad, smooth residual</span>
+<span class="c1"># that a Voigt fit cannot absorb. Section 4 reconstructs that continuum</span>
+<span class="c1"># (raw / normalised) and measures how far it wanders from a local straight</span>
+<span class="c1"># line using a *moving* window -- CONT_ERR_WINDOW_A wide, re-centred every</span>
+<span class="c1"># CONT_ERR_STEP_A -- rather than a fixed, non-overlapping bin grid, so the</span>
+<span class="c1"># resulting fractional error varies smoothly with wavelength instead of</span>
+<span class="c1"># jumping at hard bin edges. The result is folded into noise_spectrum in</span>
+<span class="c1"># quadrature.</span>
+<span class="n">CONT_ERR_WINDOW_A</span>   <span class="o">=</span> <span class="mi">50</span>      <span class="c1"># Angstrom -- width of the moving local linear-fit window</span>
+<span class="n">CONT_ERR_STEP_A</span>     <span class="o">=</span> <span class="mi">10</span>      <span class="c1"># Angstrom -- distance the window is re-centred by at each step (&lt; window → overlapping)</span>
+<span class="n">CONT_ERR_SIGMA_CLIP</span> <span class="o">=</span> <span class="mf">2.5</span>     <span class="c1"># sigma -- clip points this far from the local line (rejects real absorption/emission lines, not continuum error)</span>
+<span class="n">CONT_ERR_NITER</span>      <span class="o">=</span> <span class="mi">3</span>       <span class="c1"># iterative sigma-clipping passes per window</span>
+<span class="n">CONT_ERR_MIN_PTS</span>    <span class="o">=</span> <span class="mi">8</span>       <span class="c1"># minimum surviving (line-free) points required to trust a window's fit</span>
+<span class="n">ADD_CONTINUUM_ERROR</span> <span class="o">=</span> <span class="kc">True</span>    <span class="c1"># master switch -- False reproduces the old photon-noise-only behaviour</span>
+</pre></div>
 </div>
 </div>
 </div>
 </div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f047b7b4">
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cac92b22">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="1-%C2%B7-Load-the-FITS-file">1 · Load the FITS file<a class="anchor-link" href="#1-%C2%B7-Load-the-FITS-file">¶</a></h2><p>Uses the standard FITS WCS keywords <code>CRVAL1</code>, <code>CDELT1</code>, <code>CRPIX1</code> to reconstruct the wavelength array.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=436f1101">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">file_name</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Load a 1-D spectrum from a Visual Spec FITS file.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    wavelength : ndarray  [Å]</span>
+<span class="sd">    flux       : ndarray  [normalised]</span>
+<span class="sd">    header     : fits.Header</span>
+<span class="sd">    """</span>
+    <span class="n">hdul</span>   <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file_name</span><span class="p">)</span>
+    <span class="n">header</span> <span class="o">=</span> <span class="n">hdul</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
+    <span class="n">flux</span>   <span class="o">=</span> <span class="n">hdul</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>   <span class="c1"># convert big-endian float32 → float64</span>
+
+    <span class="n">crval</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'CRVAL1'</span><span class="p">)</span>           <span class="c1"># reference wavelength [Å]</span>
+    <span class="n">cdelt</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'CDELT1'</span><span class="p">)</span>           <span class="c1"># Å per pixel</span>
+    <span class="n">crpix</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'CRPIX1'</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>        <span class="c1"># reference pixel (1-based)</span>
+    <span class="n">npix</span>  <span class="o">=</span> <span class="n">flux</span><span class="o">.</span><span class="n">size</span>
+    <span class="n">pixel</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">npix</span><span class="p">)</span>               <span class="c1"># 0-based pixel index</span>
+    <span class="n">wavelength</span> <span class="o">=</span> <span class="n">crval</span> <span class="o">+</span> <span class="p">(</span><span class="n">pixel</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">crpix</span><span class="p">)</span> <span class="o">*</span> <span class="n">cdelt</span>
+
+    <span class="k">return</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">flux</span><span class="p">,</span> <span class="n">header</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_object_name</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fallback_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s1">'Unknown target'</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Extract the star's name from a FITS header.</span>
+
+<span class="sd">    Tries the OBJNAME keyword first (used by ISIS/BSS-format raw spectra),</span>
+<span class="sd">    then OBJECT (a common alternative), then — if the rectified file's header</span>
+<span class="sd">    doesn't carry either (this is normal: normalisation often strips them) —</span>
+<span class="sd">    peeks at fallback_file's header instead.  Falls back to a generic label</span>
+<span class="sd">    if no identifying keyword is found anywhere, so the notebook still runs</span>
+<span class="sd">    on files with minimal headers.</span>
+<span class="sd">    """</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'OBJNAME'</span><span class="p">,</span> <span class="s1">'OBJECT'</span><span class="p">):</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">fallback_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fb_header</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fallback_file</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">'OBJNAME'</span><span class="p">,</span> <span class="s1">'OBJECT'</span><span class="p">):</span>
+                <span class="n">name</span> <span class="o">=</span> <span class="n">fb_header</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">name</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">default</span>
+
+
+<span class="n">wavelength</span><span class="p">,</span> <span class="n">flux</span><span class="p">,</span> <span class="n">header</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="n">FITS_FILE</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">get_obs_date</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fallback_file</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Extract the observation date (DATE-OBS) the same way as get_object_name."""</span>
+    <span class="n">date</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'DATE-OBS'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">date</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">date</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'T'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>   <span class="c1"># keep date only, drop time-of-day</span>
+    <span class="k">if</span> <span class="n">fallback_file</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fb_header</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fallback_file</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">header</span>
+            <span class="n">date</span> <span class="o">=</span> <span class="n">fb_header</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'DATE-OBS'</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">date</span><span class="p">:</span>
+                <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">date</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">'T'</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+    <span class="k">return</span> <span class="n">default</span>
+
+
+<span class="c1"># Star name and observation date: check this file's header first, then fall\</span>
+<span class="c1"># back to RAW_FITS_FILE's header (normalised/rectified spectra often have\</span>
+<span class="c1"># these keywords stripped during processing, while the original raw\</span>
+<span class="c1"># acquisition file usually keeps them).</span>
+<span class="n">OBJECT_NAME</span> <span class="o">=</span> <span class="n">get_object_name</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fallback_file</span><span class="o">=</span><span class="n">RAW_FITS_FILE</span><span class="p">)</span>
+<span class="n">OBS_DATE</span>    <span class="o">=</span> <span class="n">get_obs_date</span><span class="p">(</span><span class="n">header</span><span class="p">,</span> <span class="n">fallback_file</span><span class="o">=</span><span class="n">RAW_FITS_FILE</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Object    : </span><span class="si">{</span><span class="n">OBJECT_NAME</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Obs. date : </span><span class="si">{</span><span class="n">OBS_DATE</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">OBS_DATE</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'n/a'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Generator : </span><span class="si">{</span><span class="n">header</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'COMMENT'</span><span class="p">,</span><span class="w"> </span><span class="s1">'n/a'</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Pixels    : </span><span class="si">{</span><span class="n">flux</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Dispersion: </span><span class="si">{</span><span class="n">header</span><span class="p">[</span><span class="s1">'CDELT1'</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2"> Å / px"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Full range: </span><span class="si">{</span><span class="n">wavelength</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> – </span><span class="si">{</span><span class="n">wavelength</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Å"</span><span class="p">)</span>
+
+<span class="c1"># ── Apply wavelength limits ──────────────────────────────────────────────────</span>
+<span class="n">lo</span> <span class="o">=</span> <span class="n">WL_MIN</span> <span class="k">if</span> <span class="n">WL_MIN</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">wavelength</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">hi</span> <span class="o">=</span> <span class="n">WL_MAX</span> <span class="k">if</span> <span class="n">WL_MAX</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">wavelength</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">&gt;=</span> <span class="n">lo</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">&lt;=</span> <span class="n">hi</span><span class="p">)</span>
+<span class="n">wavelength</span><span class="p">,</span> <span class="n">flux</span> <span class="o">=</span> <span class="n">wavelength</span><span class="p">[</span><span class="n">mask</span><span class="p">],</span> <span class="n">flux</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Working range: </span><span class="si">{</span><span class="n">wavelength</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> – </span><span class="si">{</span><span class="n">wavelength</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2"> Å  (</span><span class="si">{</span><span class="n">wavelength</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s2"> px)"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Flux      : min=</span><span class="si">{</span><span class="n">flux</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">  max=</span><span class="si">{</span><span class="n">flux</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">  mean=</span><span class="si">{</span><span class="n">flux</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f24381fe">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="2-%C2%B7-Noise-estimation">2 · Noise estimation<a class="anchor-link" href="#2-%C2%B7-Noise-estimation">¶</a></h2><p>We estimate the noise from a <strong>line-free continuum window</strong> (<code>NOISE_WL_MIN</code> / <code>NOISE_WL_MAX</code>).<br/>
+Three complementary metrics are computed:</p>
+<p>| Metric | Formula | Meaning |
+|--------|---------|----------|
+| <strong>σ (std dev)</strong> | <code>std(flux_window)</code> | RMS scatter around the local mean — best general noise estimator |
+| <strong>NMAD</strong> | <code>1.4826 × median(|f − median(f)|)</code> | Robust to residual cosmic rays or weak lines |
+| <strong>SNR</strong> | <code>mean(flux_window) / σ</code> | Signal-to-noise ratio in the window |</p>
+<p>The result is used later as the detection threshold for absorption lines.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=497242db">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># ── Noise estimation ─────────────────────────────────────────────────────────</span>
+<span class="n">noise_mask</span>   <span class="o">=</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">&gt;=</span> <span class="n">NOISE_WL_MIN</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">&lt;=</span> <span class="n">NOISE_WL_MAX</span><span class="p">)</span>
+<span class="n">noise_pixels</span> <span class="o">=</span> <span class="n">noise_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+<span class="k">if</span> <span class="n">noise_pixels</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s1">'Noise window </span><span class="si">{</span><span class="n">NOISE_WL_MIN</span><span class="si">}</span><span class="s1">–</span><span class="si">{</span><span class="n">NOISE_WL_MAX</span><span class="si">}</span><span class="s1"> Å contains only '</span>
+        <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">noise_pixels</span><span class="si">}</span><span class="s1"> pixel(s). Widen the window or move it inside '</span>
+        <span class="sa">f</span><span class="s1">'the working range </span><span class="si">{</span><span class="n">WL_MIN</span><span class="si">}</span><span class="s1">–</span><span class="si">{</span><span class="n">WL_MAX</span><span class="si">}</span><span class="s1"> Å.'</span>
+    <span class="p">)</span>
+
+<span class="n">flux_win</span>  <span class="o">=</span> <span class="n">flux</span><span class="p">[</span><span class="n">noise_mask</span><span class="p">]</span>
+<span class="n">wl_win</span>    <span class="o">=</span> <span class="n">wavelength</span><span class="p">[</span><span class="n">noise_mask</span><span class="p">]</span>
+
+<span class="n">noise_std</span>  <span class="o">=</span> <span class="n">flux_win</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>                          <span class="c1"># sample std dev</span>
+<span class="n">noise_nmad</span> <span class="o">=</span> <span class="mf">1.4826</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">flux_win</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">flux_win</span><span class="p">)))</span>  <span class="c1"># robust</span>
+<span class="n">noise_mean</span> <span class="o">=</span> <span class="n">flux_win</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+<span class="n">snr_window</span> <span class="o">=</span> <span class="n">noise_mean</span> <span class="o">/</span> <span class="n">noise_std</span>
+
+<span class="c1"># Store the primary noise estimate used downstream (std dev)</span>
+<span class="n">NOISE_LEVEL</span> <span class="o">=</span> <span class="n">noise_std</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'Noise estimation window'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  Range   : </span><span class="si">{</span><span class="n">wl_win</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> – </span><span class="si">{</span><span class="n">wl_win</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> Å  (</span><span class="si">{</span><span class="n">noise_pixels</span><span class="si">}</span><span class="s1"> px)'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  Mean    : </span><span class="si">{</span><span class="n">noise_mean</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  Std dev : </span><span class="si">{</span><span class="n">noise_std</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">   ← NOISE_LEVEL used downstream'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  NMAD    : </span><span class="si">{</span><span class="n">noise_nmad</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">   (robust estimate)'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  SNR     : </span><span class="si">{</span><span class="n">snr_window</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+<span class="c1"># ── Inset plot of the noise window ───────────────────────────────────────────</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span>
+                         <span class="n">gridspec_kw</span><span class="o">=</span><span class="p">{</span><span class="s1">'width_ratios'</span><span class="p">:</span> <span class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">]})</span>
+
+<span class="c1"># Left panel: zoom on the window in context</span>
+<span class="n">ctx</span> <span class="o">=</span> <span class="mi">200</span>   <span class="c1"># Å of context on each side</span>
+<span class="n">ctx_lo</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">wavelength</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">NOISE_WL_MIN</span> <span class="o">-</span> <span class="n">ctx</span><span class="p">)</span>
+<span class="n">ctx_hi</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">wavelength</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">NOISE_WL_MAX</span> <span class="o">+</span> <span class="n">ctx</span><span class="p">)</span>
+<span class="n">ctx_mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">&gt;=</span> <span class="n">ctx_lo</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">&lt;=</span> <span class="n">ctx_hi</span><span class="p">)</span>
+
+<span class="n">ax0</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">ax0</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelength</span><span class="p">[</span><span class="n">ctx_mask</span><span class="p">],</span> <span class="n">flux</span><span class="p">[</span><span class="n">ctx_mask</span><span class="p">],</span>
+         <span class="n">color</span><span class="o">=</span><span class="s1">'steelblue'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Spectrum'</span><span class="p">)</span>
+<span class="n">ax0</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">NOISE_WL_MIN</span><span class="p">,</span> <span class="n">NOISE_WL_MAX</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'gold'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.35</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Noise window'</span><span class="p">)</span>
+<span class="n">ax0</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">noise_mean</span><span class="p">,</span>             <span class="n">color</span><span class="o">=</span><span class="s1">'black'</span><span class="p">,</span>  <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">'-'</span><span class="p">,</span>  <span class="n">label</span><span class="o">=</span><span class="s1">'Mean'</span><span class="p">)</span>
+<span class="n">ax0</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">noise_mean</span> <span class="o">+</span> <span class="n">noise_std</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'tomato'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">'--'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">r</span><span class="s1">'Mean ± 1$\sigma$'</span><span class="p">)</span>
+<span class="n">ax0</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">noise_mean</span> <span class="o">-</span> <span class="n">noise_std</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'tomato'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">'--'</span><span class="p">)</span>
+<span class="n">ax0</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'Wavelength (Å)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax0</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Normalised Flux'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax0</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Noise window in context  [</span><span class="si">{</span><span class="n">NOISE_WL_MIN</span><span class="si">}</span><span class="s1">–</span><span class="si">{</span><span class="n">NOISE_WL_MAX</span><span class="si">}</span><span class="s1"> Å]'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax0</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+
+<span class="c1"># Right panel: flux histogram of the noise window + Gaussian overlay</span>
+<span class="n">ax1</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">counts</span><span class="p">,</span> <span class="n">bin_edges</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ax1</span><span class="o">.</span><span class="n">hist</span><span class="p">(</span><span class="n">flux_win</span><span class="p">,</span> <span class="n">bins</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'gold'</span><span class="p">,</span>
+                                <span class="n">edgecolor</span><span class="o">=</span><span class="s1">'goldenrod'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+                                <span class="n">orientation</span><span class="o">=</span><span class="s1">'vertical'</span><span class="p">,</span> <span class="n">density</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">xs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">flux_win</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">flux_win</span><span class="o">.</span><span class="n">max</span><span class="p">(),</span> <span class="mi">300</span><span class="p">)</span>
+<span class="n">gauss</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">noise_std</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">((</span><span class="n">xs</span> <span class="o">-</span> <span class="n">noise_mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">noise_std</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">gauss</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'tomato'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Gaussian fit'</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'Flux value'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Density'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Pixel distribution'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+<span class="n">ax1</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.92</span><span class="p">,</span> <span class="sa">f</span><span class="s1">'$</span><span class="se">\\</span><span class="s1">sigma$ = </span><span class="si">{</span><span class="n">noise_std</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="se">\n</span><span class="s1">SNR = </span><span class="si">{</span><span class="n">snr_window</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1">'</span><span class="p">,</span>
+         <span class="n">transform</span><span class="o">=</span><span class="n">ax1</span><span class="o">.</span><span class="n">transAxes</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">'top'</span><span class="p">,</span>
+         <span class="n">bbox</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">boxstyle</span><span class="o">=</span><span class="s1">'round'</span><span class="p">,</span> <span class="n">facecolor</span><span class="o">=</span><span class="s1">'white'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.7</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=aa21c90e">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="3-%C2%B7-Wavelength-dependent-noise-rescaling">3 · Wavelength-dependent noise rescaling<a class="anchor-link" href="#3-%C2%B7-Wavelength-dependent-noise-rescaling">¶</a></h2><p>The scalar <code>NOISE_LEVEL</code> from Section 2 is valid only at the reference window (~5750 Å).<br/>
+Elsewhere the raw counts are very different — the instrumental response and the stellar SED together produce a large flux variation across the working range — so the noise in the normalised spectrum also varies.</p>
+<p><strong>Strategy (coarse-grained, no line-fitting needed):</strong></p>
+<ol>
+<li>Load the pre-normalisation raw spectrum.</li>
+<li>Smooth it with a wide box filter (<code>NOISE_SMOOTH_WIDTH_A</code>) to obtain a coarse continuum — this washes out all individual lines while preserving the large-scale sensitivity shape.</li>
+<li>Normalise that continuum to 1.0 at the noise reference window → <strong>relative sensitivity curve</strong> <code>S(λ)</code>.</li>
+<li>Scale the noise by a power law in <code>S(λ)</code>:
+$$\text{noise}(\lambda) = \frac{\text{NOISE\_LEVEL}}{S(\lambda)^{\,p}}, \qquad p = \text{NOISE\_SCALING\_POWER}$$
+<strong><code>p = 0.5</code> (default) — photon (shot) noise.</strong> Counting statistics are Poisson:
+the absolute noise in the raw counts scales as $\sqrt{N}$, so after dividing
+by a continuum $C(\lambda)\!\approx\!N(\lambda)$ the <em>fractional</em> noise in the
+normalised spectrum scales as $\sigma_{\text{norm}} \propto \sqrt{N}/N = 1/\sqrt{N}$
+— an inverse <strong>square-root</strong> law in the count level, i.e. in $S(\lambda)$.
+<code>p = 1.0</code> (the old behaviour, <code>noise ∝ 1/S(λ)</code>) would only be correct if a
+wavelength-independent additive noise floor (read noise, dark current)
+dominated over shot noise — unusual once the reference-window SNR is in the
+hundreds, as it is here.</li>
+</ol>
+<p>The result <code>noise_spectrum</code> replaces <code>NOISE_LEVEL</code> everywhere downstream.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=6aecb447">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">scipy.ndimage</span><span class="w"> </span><span class="kn">import</span> <span class="n">uniform_filter1d</span>
+
+<span class="c1"># ── Load the raw (pre-normalisation) spectrum ─────────────────────────────</span>
+<span class="n">wl_raw</span><span class="p">,</span> <span class="n">fl_raw</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="n">RAW_FITS_FILE</span><span class="p">)</span>
+<span class="n">m_raw</span> <span class="o">=</span> <span class="p">(</span><span class="n">wl_raw</span> <span class="o">&gt;=</span> <span class="n">WL_MIN</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">wl_raw</span> <span class="o">&lt;=</span> <span class="n">WL_MAX</span><span class="p">)</span>
+<span class="n">wl_raw</span><span class="p">,</span> <span class="n">fl_raw</span> <span class="o">=</span> <span class="n">wl_raw</span><span class="p">[</span><span class="n">m_raw</span><span class="p">],</span> <span class="n">fl_raw</span><span class="p">[</span><span class="n">m_raw</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Raw spectrum loaded: </span><span class="si">{</span><span class="n">wl_raw</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> – </span><span class="si">{</span><span class="n">wl_raw</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> Å  (</span><span class="si">{</span><span class="n">wl_raw</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s1"> px)'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Raw flux range: </span><span class="si">{</span><span class="n">fl_raw</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> – </span><span class="si">{</span><span class="n">fl_raw</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+<span class="c1"># ── Coarse continuum by box smoothing ────────────────────────────────────</span>
+<span class="n">cdelt_raw</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">wl_raw</span><span class="p">))</span>
+<span class="n">width_px</span>   <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">NOISE_SMOOTH_WIDTH_A</span> <span class="o">/</span> <span class="n">cdelt_raw</span><span class="p">))</span>
+<span class="n">continuum</span>  <span class="o">=</span> <span class="n">uniform_filter1d</span><span class="p">(</span><span class="n">fl_raw</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">width_px</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="se">\n</span><span class="s1">Smoothing width: </span><span class="si">{</span><span class="n">NOISE_SMOOTH_WIDTH_A</span><span class="si">}</span><span class="s1"> Å = </span><span class="si">{</span><span class="n">width_px</span><span class="si">}</span><span class="s1"> px'</span><span class="p">)</span>
+
+<span class="c1"># ── Reference level at the noise window ──────────────────────────────────</span>
+<span class="n">nm_raw</span>  <span class="o">=</span> <span class="p">(</span><span class="n">wl_raw</span> <span class="o">&gt;=</span> <span class="n">NOISE_WL_MIN</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">wl_raw</span> <span class="o">&lt;=</span> <span class="n">NOISE_WL_MAX</span><span class="p">)</span>
+<span class="n">ref_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">continuum</span><span class="p">[</span><span class="n">nm_raw</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Reference continuum level at noise window: </span><span class="si">{</span><span class="n">ref_val</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+<span class="c1"># ── Relative sensitivity S(λ) ────────────────────────────────────────────</span>
+<span class="n">rel_sensitivity</span> <span class="o">=</span> <span class="n">continuum</span> <span class="o">/</span> <span class="n">ref_val</span>   <span class="c1"># = 1.0 at the noise window</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Sensitivity range: </span><span class="si">{</span><span class="n">rel_sensitivity</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1"> – </span><span class="si">{</span><span class="n">rel_sensitivity</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="si">:</span><span class="s1">.3f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+<span class="c1"># ── Interpolate S(λ) onto the normalised spectrum grid ───────────────────</span>
+<span class="n">rel_sens_nrm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">wl_raw</span><span class="p">,</span> <span class="n">rel_sensitivity</span><span class="p">)</span>
+
+<span class="c1"># ── Wavelength-dependent noise array ────────────────────────────────────</span>
+<span class="c1"># More raw counts → lower fractional noise in the normalised spectrum, via a</span>
+<span class="c1"># power law in the relative sensitivity: noise(λ) = NOISE_LEVEL / S(λ)**p.</span>
+<span class="c1"># p = NOISE_SCALING_POWER (0.5 = photon/Poisson noise, the physically-motivated</span>
+<span class="c1"># default; 1.0 reproduces the old linear behaviour -- see Section 3 markdown).</span>
+<span class="n">noise_spectrum</span> <span class="o">=</span> <span class="n">NOISE_LEVEL</span> <span class="o">/</span> <span class="n">rel_sens_nrm</span><span class="o">**</span><span class="n">NOISE_SCALING_POWER</span>
+
+<span class="c1"># Sanity check: value at the reference window should equal NOISE_LEVEL</span>
+<span class="n">check_wl</span>   <span class="o">=</span> <span class="p">(</span><span class="n">NOISE_WL_MIN</span> <span class="o">+</span> <span class="n">NOISE_WL_MAX</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+<span class="n">check_val</span>  <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">check_wl</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">noise_spectrum</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="se">\n</span><span class="s1">Sanity check at </span><span class="si">{</span><span class="n">check_wl</span><span class="si">:</span><span class="s1">.0f</span><span class="si">}</span><span class="s1"> Å: noise_spectrum = </span><span class="si">{</span><span class="n">check_val</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">'</span>
+      <span class="sa">f</span><span class="s1">'  (NOISE_LEVEL = </span><span class="si">{</span><span class="n">NOISE_LEVEL</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">)'</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">noise_spectrum at key wavelengths:'</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">wl_check</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">3800</span><span class="p">,</span> <span class="mi">4340</span><span class="p">,</span> <span class="mi">4861</span><span class="p">,</span> <span class="mi">5750</span><span class="p">,</span> <span class="mi">6563</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">wavelength</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">wl_check</span> <span class="o">&lt;=</span> <span class="n">wavelength</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">wl_check</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">noise_spectrum</span><span class="p">))</span>
+        <span class="n">ratio</span> <span class="o">=</span> <span class="n">val</span> <span class="o">/</span> <span class="n">NOISE_LEVEL</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  </span><span class="si">{</span><span class="n">wl_check</span><span class="si">}</span><span class="s1"> Å → </span><span class="si">{</span><span class="n">val</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">  (</span><span class="si">{</span><span class="n">ratio</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">× reference)'</span><span class="p">)</span>
+
+<span class="c1"># ── Three-panel diagnostic figure ────────────────────────────────────────</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">14</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Panel 1: raw spectrum + smoothed continuum</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wl_raw</span><span class="p">,</span> <span class="n">fl_raw</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'steelblue'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.6</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Raw flux'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wl_raw</span><span class="p">,</span> <span class="n">continuum</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'tomato'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">2.2</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">'Smoothed continuum (</span><span class="si">{</span><span class="n">NOISE_SMOOTH_WIDTH_A</span><span class="si">}</span><span class="s1"> Å box)'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">NOISE_WL_MIN</span><span class="p">,</span> <span class="n">NOISE_WL_MAX</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'gold'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Noise window'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">ref_val</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'goldenrod'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.2</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">'--'</span><span class="p">,</span>
+           <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">'Reference level (</span><span class="si">{</span><span class="n">ref_val</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">)'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Raw flux (ADU)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Panel 1 — Raw spectrum and coarse continuum envelope'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">WL_MIN</span><span class="p">,</span> <span class="n">WL_MAX</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mi">200</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_minor_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mi">50</span><span class="p">))</span>
+
+<span class="c1"># Panel 2: relative sensitivity S(λ)</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wl_raw</span><span class="p">,</span> <span class="n">rel_sensitivity</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'darkorange'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.8</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'black'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">'--'</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Reference = 1'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">NOISE_WL_MIN</span><span class="p">,</span> <span class="n">NOISE_WL_MAX</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'gold'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Noise window'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Relative sensitivity  S(λ)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Panel 2 — Relative sensitivity (continuum / reference level)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">WL_MIN</span><span class="p">,</span> <span class="n">WL_MAX</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mi">200</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_minor_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mi">50</span><span class="p">))</span>
+
+<span class="c1"># Panel 3: noise_spectrum vs flat NOISE_LEVEL</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">noise_spectrum</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'seagreen'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.8</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">'noise_spectrum (wavelength-dependent)'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">NOISE_LEVEL</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'black'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">'--'</span><span class="p">,</span>
+           <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">'Scalar NOISE_LEVEL = </span><span class="si">{</span><span class="n">NOISE_LEVEL</span><span class="si">:</span><span class="s1">.4f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span><span class="n">NOISE_WL_MIN</span><span class="p">,</span> <span class="n">NOISE_WL_MAX</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'gold'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Reference window'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'Wavelength (Å)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Noise (norm. flux units)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Panel 3 — Wavelength-dependent noise  [noise_spectrum used downstream]'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">WL_MIN</span><span class="p">,</span> <span class="n">WL_MAX</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mi">200</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_minor_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mi">50</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=e9cd358b">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="4-%C2%B7-Continuum-normalisation-systematic-error">4 · Continuum-normalisation systematic error<a class="anchor-link" href="#4-%C2%B7-Continuum-normalisation-systematic-error">¶</a></h2><p>Section 3 rescaled the <strong>random</strong> (photon/read) noise across wavelength. But the
+rectified spectrum was built by dividing the raw spectrum by a continuum that was
+traced <strong>manually</strong> — an arbitrary interpolation through hand-picked anchor points.
+That continuum is not perfectly known, and its placement error is a <strong>systematic</strong>
+uncertainty, independent of the random noise above. This is very likely the source
+of the spurious features seen in the wings of broad lines (Balmer, in particular):
+a slightly mismatched continuum leaves a broad, smooth mismatch in the wings that
+no Voigt profile can reproduce, and the leftover residual looks exactly like a
+faint extra absorption feature to a peak finder that only knows about photon noise.</p>
+<p><strong>Procedure:</strong></p>
+<ol>
+<li><strong>Reconstruct the continuum actually used</strong> for the normalisation:
+$$C(\lambda) = \frac{\text{raw}(\lambda)}{\text{normalised}(\lambda)}$$
+(raw spectrum interpolated onto the rectified spectrum's wavelength grid).</li>
+<li><strong>Local linear fit in a moving window</strong>, <code>CONT_ERR_WINDOW_A</code> Å wide (50 Å by
+default), re-centred every <code>CONT_ERR_STEP_A</code> Å (10 Å by default) so
+consecutive windows overlap. A real continuum varies smoothly on these
+scales, so a straight line is a fair local model of "what the continuum
+should look like" inside each window; deep absorption lines are excluded
+from each window's fit via iterative <code>CONT_ERR_SIGMA_CLIP</code>-σ clipping so
+they don't bias the linear trend. Sliding the window rather than stepping
+through fixed, non-overlapping bins avoids the hard jumps in $\sigma_C/C$
+that a bin grid produces right at each bin edge — the estimate is
+continuous and re-evaluated at every step instead of shared piecewise
+across a whole 50 Å block.</li>
+<li><strong>Residuals</strong> of $C(\lambda)$ from its local linear fit, evaluated at the
+window's <em>centre</em> and divided by the local continuum level there, give the
+<em>fractional</em> continuum-placement uncertainty $\sigma_C/C$ at that centre.
+The per-centre values are then linearly interpolated onto the full
+per-pixel wavelength grid.</li>
+<li><strong>Propagate to the normalised flux.</strong> Since $\text{normalised} = \text{raw}/C$,
+standard error propagation gives
+$$\sigma_{\text{continuum}}(\lambda) \approx \text{flux}(\lambda)\times\frac{\sigma_C(\lambda)}{C(\lambda)}$$
+which is added <strong>in quadrature</strong> to the photon-noise <code>noise_spectrum(λ)</code> from
+Section 3:
+$$\sigma_{\text{total}}(\lambda) = \sqrt{\sigma_{\text{photon}}^2(\lambda) + \sigma_{\text{continuum}}^2(\lambda)}$$</li>
+</ol>
+<p><code>noise_spectrum</code> and the scalar <code>NOISE_LEVEL</code> are both updated in place, so every
+downstream step (detection height/prominence, deblending thresholds, SSR_norm)
+automatically uses the combined uncertainty. Set <code>ADD_CONTINUUM_ERROR = False</code> in
+the config cell to fall back to the old photon-noise-only behaviour.</p>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=fc5d3393">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># ── 1. Reconstruct the continuum that was actually used ─────────────────────</span>
+<span class="c1"># raw / normalised, on the rectified spectrum's wavelength grid (raw is</span>
+<span class="c1"># interpolated since the two files don't share the exact same pixel phase).</span>
+<span class="n">raw_on_nrm_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">wl_raw</span><span class="p">,</span> <span class="n">fl_raw</span><span class="p">)</span>
+<span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s1">'ignore'</span><span class="p">,</span> <span class="n">invalid</span><span class="o">=</span><span class="s1">'ignore'</span><span class="p">):</span>
+    <span class="n">continuum_reconstructed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">flux</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">raw_on_nrm_grid</span> <span class="o">/</span> <span class="n">flux</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+<span class="c1"># ── 2 &amp; 3. Moving-window robust linear fit + fractional residual RMS ────────</span>
+<span class="c1"># A fixed, non-overlapping bin grid produces a hard jump in sigma_C/C right at</span>
+<span class="c1"># every bin edge, purely from where the grid happened to be laid down -- not</span>
+<span class="c1"># from anything physical in the continuum. Instead, slide a CONT_ERR_WINDOW_A</span>
+<span class="c1"># wide window across the spectrum, re-centring it every CONT_ERR_STEP_A (so</span>
+<span class="c1"># neighbouring windows overlap), fit + sigma-clip within each window exactly</span>
+<span class="c1"># as before, and evaluate the fractional residual at the window's *centre*.</span>
+<span class="c1"># The result is a dense, smoothly-varying grid of (centre, sigma_C/C) pairs</span>
+<span class="c1"># that is then interpolated onto the full per-pixel wavelength array.</span>
+<span class="n">half_win</span> <span class="o">=</span> <span class="n">CONT_ERR_WINDOW_A</span> <span class="o">/</span> <span class="mf">2.0</span>
+<span class="n">win_centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">wavelength</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wavelength</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">CONT_ERR_STEP_A</span><span class="p">,</span> <span class="n">CONT_ERR_STEP_A</span><span class="p">)</span>
+<span class="n">win_centers</span> <span class="o">=</span> <span class="n">win_centers</span><span class="p">[(</span><span class="n">win_centers</span> <span class="o">&gt;=</span> <span class="n">wavelength</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">win_centers</span> <span class="o">&lt;=</span> <span class="n">wavelength</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])]</span>
+
+<span class="n">frac_centers</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">win_centers</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>   <span class="c1"># fractional sigma_C/C, at each window centre</span>
+<span class="n">level_centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">win_centers</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>   <span class="c1"># local linear-fit value at the centre, for diagnostics</span>
+
+<span class="n">win_report</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">wc</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">win_centers</span><span class="p">):</span>
+    <span class="n">w0</span><span class="p">,</span> <span class="n">w1</span> <span class="o">=</span> <span class="n">wc</span> <span class="o">-</span> <span class="n">half_win</span><span class="p">,</span> <span class="n">wc</span> <span class="o">+</span> <span class="n">half_win</span>
+    <span class="n">m_win</span> <span class="o">=</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">&gt;=</span> <span class="n">w0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">&lt;=</span> <span class="n">w1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">continuum_reconstructed</span><span class="p">)</span>
+    <span class="n">n_win</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">m_win</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>
+    <span class="k">if</span> <span class="n">n_win</span> <span class="o">&lt;</span> <span class="n">CONT_ERR_MIN_PTS</span><span class="p">:</span>
+        <span class="n">win_report</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">wc</span><span class="p">,</span> <span class="n">n_win</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span>
+        <span class="k">continue</span>
+
+    <span class="n">x_win</span> <span class="o">=</span> <span class="n">wavelength</span><span class="p">[</span><span class="n">m_win</span><span class="p">]</span>
+    <span class="n">y_win</span> <span class="o">=</span> <span class="n">continuum_reconstructed</span><span class="p">[</span><span class="n">m_win</span><span class="p">]</span>
+
+    <span class="c1"># Pre-filter pass: reject gross outliers from dividing by near-zero flux</span>
+    <span class="c1"># in deep line cores, using a robust median/MAD estimate (insensitive to</span>
+    <span class="c1"># the very outliers we're trying to remove) before any least-squares fit.</span>
+    <span class="n">med</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">y_win</span><span class="p">)</span>
+    <span class="n">mad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y_win</span> <span class="o">-</span> <span class="n">med</span><span class="p">))</span> <span class="o">*</span> <span class="mf">1.4826</span> <span class="o">+</span> <span class="mf">1e-12</span>
+    <span class="n">keep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">y_win</span> <span class="o">-</span> <span class="n">med</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">8</span> <span class="o">*</span> <span class="n">mad</span>
+
+    <span class="c1"># Iterative sigma-clipped linear fit: real absorption/emission lines pull</span>
+    <span class="c1"># points away from the smooth continuum trend and get clipped out, leaving</span>
+    <span class="c1"># only the continuum's own point-to-point wobble in the residuals.</span>
+    <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">CONT_ERR_NITER</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">keep</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">CONT_ERR_MIN_PTS</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">x_win</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">y_win</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">resid_all</span> <span class="o">=</span> <span class="n">y_win</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">x_win</span><span class="p">)</span>
+        <span class="n">sigma</span> <span class="o">=</span> <span class="n">resid_all</span><span class="p">[</span><span class="n">keep</span><span class="p">]</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">keep</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">sigma</span><span class="p">)</span> <span class="ow">or</span> <span class="n">sigma</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">new_keep</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">resid_all</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">CONT_ERR_SIGMA_CLIP</span> <span class="o">*</span> <span class="n">sigma</span>
+        <span class="k">if</span> <span class="n">new_keep</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="n">keep</span><span class="o">.</span><span class="n">sum</span><span class="p">():</span>
+            <span class="n">keep</span> <span class="o">=</span> <span class="n">new_keep</span>
+            <span class="k">break</span>
+        <span class="n">keep</span> <span class="o">=</span> <span class="n">new_keep</span>
+
+    <span class="k">if</span> <span class="n">keep</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">CONT_ERR_MIN_PTS</span><span class="p">:</span>
+        <span class="n">win_report</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">wc</span><span class="p">,</span> <span class="n">n_win</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">keep</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span>
+        <span class="k">continue</span>
+
+    <span class="n">p_final</span>     <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">x_win</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="n">y_win</span><span class="p">[</span><span class="n">keep</span><span class="p">],</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">resid_final</span> <span class="o">=</span> <span class="p">(</span><span class="n">y_win</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">p_final</span><span class="p">,</span> <span class="n">x_win</span><span class="p">))[</span><span class="n">keep</span><span class="p">]</span>
+    <span class="n">rms</span>         <span class="o">=</span> <span class="n">resid_final</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">ddof</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">local_level</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyval</span><span class="p">(</span><span class="n">p_final</span><span class="p">,</span> <span class="n">wc</span><span class="p">)</span>   <span class="c1"># local trend evaluated AT the window centre</span>
+    <span class="n">frac</span>        <span class="o">=</span> <span class="n">rms</span> <span class="o">/</span> <span class="n">local_level</span> <span class="k">if</span> <span class="n">local_level</span> <span class="o">!=</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="n">frac_centers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="o">=</span> <span class="n">frac</span>
+    <span class="n">level_centers</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">local_level</span>
+    <span class="n">win_report</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">wc</span><span class="p">,</span> <span class="n">n_win</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">keep</span><span class="o">.</span><span class="n">sum</span><span class="p">()),</span> <span class="n">frac</span><span class="p">))</span>
+
+<span class="c1"># Fill any window centres that failed (too few points, edge effects) by</span>
+<span class="c1"># interpolating from neighbouring valid centres, then interpolate the whole</span>
+<span class="c1"># thing onto the full per-pixel wavelength grid -- no gaps either way.</span>
+<span class="n">valid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">frac_centers</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">valid</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+    <span class="n">frac_centers</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">win_centers</span><span class="p">,</span> <span class="n">win_centers</span><span class="p">[</span><span class="n">valid</span><span class="p">],</span> <span class="n">frac_centers</span><span class="p">[</span><span class="n">valid</span><span class="p">])</span>
+    <span class="n">level_centers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">win_centers</span><span class="p">,</span> <span class="n">win_centers</span><span class="p">[</span><span class="n">valid</span><span class="p">],</span> <span class="n">level_centers</span><span class="p">[</span><span class="n">valid</span><span class="p">])</span>
+<span class="k">elif</span> <span class="n">valid</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+    <span class="n">frac_centers</span><span class="p">[:]</span>  <span class="o">=</span> <span class="n">frac_centers</span><span class="p">[</span><span class="n">valid</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">level_centers</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">level_centers</span><span class="p">[</span><span class="n">valid</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">frac_centers</span><span class="p">[:]</span>  <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">level_centers</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">continuum_reconstructed</span><span class="p">)</span>
+
+<span class="n">cont_err_frac</span>  <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">win_centers</span><span class="p">,</span> <span class="n">frac_centers</span><span class="p">)</span>
+<span class="n">cont_fit_curve</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">win_centers</span><span class="p">,</span> <span class="n">level_centers</span><span class="p">)</span>
+
+<span class="c1"># ── 4. Propagate to normalised-flux uncertainty, combine in quadrature ──────</span>
+<span class="n">continuum_noise_spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">flux</span> <span class="o">*</span> <span class="n">cont_err_frac</span><span class="p">)</span>
+
+<span class="n">noise_spectrum_photon_only</span> <span class="o">=</span> <span class="n">noise_spectrum</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>   <span class="c1"># keep Section 3's estimate for comparison</span>
+<span class="n">NOISE_LEVEL_photon_only</span>    <span class="o">=</span> <span class="n">NOISE_LEVEL</span>
+
+<span class="k">if</span> <span class="n">ADD_CONTINUUM_ERROR</span><span class="p">:</span>
+    <span class="n">noise_spectrum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">noise_spectrum_photon_only</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">continuum_noise_spectrum</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">cont_err_at_ref</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">((</span><span class="n">NOISE_WL_MIN</span> <span class="o">+</span> <span class="n">NOISE_WL_MAX</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">continuum_noise_spectrum</span><span class="p">))</span>
+    <span class="n">NOISE_LEVEL</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">NOISE_LEVEL_photon_only</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">cont_err_at_ref</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s1">'ADD_CONTINUUM_ERROR = False -&gt; noise_spectrum left as photon-noise-only (Section 3 values).'</span><span class="p">)</span>
+
+<span class="c1"># ── Reporting ────────────────────────────────────────────────────────────────</span>
+<span class="n">n_total</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">win_report</span><span class="p">)</span>
+<span class="n">n_ok</span>    <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">win_report</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">f</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Continuum-error windows : </span><span class="si">{</span><span class="n">CONT_ERR_WINDOW_A</span><span class="si">}</span><span class="s1"> A wide, </span><span class="si">{</span><span class="n">CONT_ERR_STEP_A</span><span class="si">}</span><span class="s1"> A step, '</span>
+      <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">n_total</span><span class="si">}</span><span class="s1"> centres, </span><span class="si">{</span><span class="n">n_ok</span><span class="si">}</span><span class="s1"> fitted successfully'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'                           (&gt;= </span><span class="si">{</span><span class="n">CONT_ERR_MIN_PTS</span><span class="si">}</span><span class="s1"> line-free px after </span><span class="si">{</span><span class="n">CONT_ERR_NITER</span><span class="si">}</span><span class="s1">x </span><span class="si">{</span><span class="n">CONT_ERR_SIGMA_CLIP</span><span class="si">}</span><span class="s1"> sigma clip)'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Fractional cont. error  sigma_C/C : median=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanmedian</span><span class="p">(</span><span class="n">cont_err_frac</span><span class="p">)</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">  '</span>
+      <span class="sa">f</span><span class="s1">'range=</span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanmin</span><span class="p">(</span><span class="n">cont_err_frac</span><span class="p">)</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1"> - </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">nanmax</span><span class="p">(</span><span class="n">cont_err_frac</span><span class="p">)</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'NOISE_LEVEL (reference window): </span><span class="si">{</span><span class="n">NOISE_LEVEL_photon_only</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1"> (photon only) -&gt; </span><span class="si">{</span><span class="n">NOISE_LEVEL</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1"> (combined)'</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="se">\n</span><span class="s1">noise_spectrum at key wavelengths  [photon-only  -&gt;  continuum-only  -&gt;  combined]:'</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">wl_check</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">3800</span><span class="p">,</span> <span class="mi">4340</span><span class="p">,</span> <span class="mi">4861</span><span class="p">,</span> <span class="mi">5750</span><span class="p">,</span> <span class="mi">6563</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">wavelength</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">wl_check</span> <span class="o">&lt;=</span> <span class="n">wavelength</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">wavelength</span> <span class="o">-</span> <span class="n">wl_check</span><span class="p">)))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  </span><span class="si">{</span><span class="n">wl_check</span><span class="si">:</span><span class="s1">5d</span><span class="si">}</span><span class="s1"> A :  </span><span class="si">{</span><span class="n">noise_spectrum_photon_only</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">  -&gt;  '</span>
+              <span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">continuum_noise_spectrum</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">  -&gt;  </span><span class="si">{</span><span class="n">noise_spectrum</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s1">'</span><span class="se">\n</span><span class="s1">Worst (largest fractional continuum error) window centres:'</span><span class="p">)</span>
+<span class="n">worst</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">([</span><span class="n">w</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">win_report</span> <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">w</span><span class="p">[</span><span class="mi">3</span><span class="p">])],</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="o">-</span><span class="n">w</span><span class="p">[</span><span class="mi">3</span><span class="p">])[:</span><span class="mi">5</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">wc</span><span class="p">,</span> <span class="n">n_win</span><span class="p">,</span> <span class="n">n_keep</span><span class="p">,</span> <span class="n">frac</span> <span class="ow">in</span> <span class="n">worst</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  centre </span><span class="si">{</span><span class="n">wc</span><span class="si">:</span><span class="s1">7.1f</span><span class="si">}</span><span class="s1"> A   n=</span><span class="si">{</span><span class="n">n_win</span><span class="si">:</span><span class="s1">4d</span><span class="si">}</span><span class="s1">  kept=</span><span class="si">{</span><span class="n">n_keep</span><span class="si">:</span><span class="s1">4d</span><span class="si">}</span><span class="s1">   sigma_C/C = </span><span class="si">{</span><span class="n">frac</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=ada5817a">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># Reference wavelengths used only for annotating the diagnostic figure below</span>
+<span class="c1"># (kept local to this notebook -- the finder notebook has its own BALMER_LINES</span>
+<span class="c1"># used for classification, defined in its config cell).</span>
+<span class="n">LANDMARK_LINES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="sa">r</span><span class="s1">'H$\epsilon$ 3970'</span><span class="p">:</span> <span class="mf">3970.07</span><span class="p">,</span>
+    <span class="sa">r</span><span class="s1">'H$\delta$ 4102'</span><span class="p">:</span>   <span class="mf">4101.74</span><span class="p">,</span>
+    <span class="sa">r</span><span class="s1">'H$\gamma$ 4340'</span><span class="p">:</span>   <span class="mf">4340.47</span><span class="p">,</span>
+    <span class="sa">r</span><span class="s1">'H$\beta$ 4861'</span><span class="p">:</span>    <span class="mf">4861.33</span><span class="p">,</span>
+    <span class="sa">r</span><span class="s1">'Na D 5893'</span><span class="p">:</span>        <span class="mf">5892.94</span><span class="p">,</span>
+    <span class="sa">r</span><span class="s1">'H$\alpha$ 6563'</span><span class="p">:</span>   <span class="mf">6562.80</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">BALMER_LINES</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s1">'Hepsilon'</span><span class="p">:</span> <span class="mf">3970.07</span><span class="p">,</span>
+    <span class="s1">'Hdelta'</span><span class="p">:</span>   <span class="mf">4101.74</span><span class="p">,</span>
+    <span class="s1">'Hgamma'</span><span class="p">:</span>   <span class="mf">4340.47</span><span class="p">,</span>
+    <span class="s1">'Hbeta'</span><span class="p">:</span>    <span class="mf">4861.33</span><span class="p">,</span>
+    <span class="s1">'Halpha'</span><span class="p">:</span>   <span class="mf">6562.80</span><span class="p">,</span>
+<span class="p">}</span>
+<span class="n">DETECTION_NSIGMA</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># matches the default in spectral_lines_finder.ipynb; only used</span>
+                       <span class="c1"># to size the shaded detection band in the zoom plot below</span>
+<span class="n">C_SPEC</span> <span class="o">=</span> <span class="s1">'#2c3e50'</span>    <span class="c1"># dark grey -- spectrum trace (matches finder notebook's colour)</span>
+
+<span class="c1"># ── Diagnostic figure: reconstructed continuum + noise budget ───────────────</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">14</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<span class="c1"># Panel 1: reconstructed continuum with the moving-window local linear fits</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">continuum_reconstructed</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'steelblue'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.75</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Reconstructed continuum  C(λ) = raw / normalised'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">cont_fit_curve</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'tomato'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.6</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">'Moving-window local fits (</span><span class="si">{</span><span class="n">CONT_ERR_WINDOW_A</span><span class="si">}</span><span class="s1"> Å wide, </span><span class="si">{</span><span class="n">CONT_ERR_STEP_A</span><span class="si">}</span><span class="s1"> Å step, </span><span class="si">{</span><span class="n">CONT_ERR_SIGMA_CLIP</span><span class="si">}</span><span class="s1">σ clipped)'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Raw counts (ADU)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Panel 1 — Reconstructed continuum vs. its moving-window linear-fit trend'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">WL_MIN</span><span class="p">,</span> <span class="n">WL_MAX</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mi">200</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_minor_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mi">50</span><span class="p">))</span>
+
+<span class="c1"># Panel 2: fractional continuum-placement error σ_C/C</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">cont_err_frac</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'darkorange'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.8</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">wl_l</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="n">LANDMARK_LINES</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">wavelength</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">label</span> <span class="o">&lt;=</span> <span class="n">wavelength</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'tomato'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">'--'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">'Fractional error  $\sigma_C/C$'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Panel 2 — Continuum-placement fractional uncertainty (dashed lines = Balmer/Na D)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">WL_MIN</span><span class="p">,</span> <span class="n">WL_MAX</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mi">200</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_minor_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mi">50</span><span class="p">))</span>
+
+<span class="c1"># Panel 3: noise budget — photon-only vs continuum-only vs combined</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">axes</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">noise_spectrum_photon_only</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'seagreen'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.4</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Photon noise only (Section 3)'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">continuum_noise_spectrum</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'darkorange'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.4</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Continuum-placement error (Section 4)'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelength</span><span class="p">,</span> <span class="n">noise_spectrum</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">'black'</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.9</span><span class="p">,</span>
+        <span class="n">label</span><span class="o">=</span><span class="s1">'Combined (quadrature sum) — used downstream'</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'Wavelength (Å)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Noise (norm. flux units)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">'Panel 3 — Noise budget: photon vs. continuum-placement vs. combined'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">(</span><span class="n">WL_MIN</span><span class="p">,</span> <span class="n">WL_MAX</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mi">200</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_minor_locator</span><span class="p">(</span><span class="n">ticker</span><span class="o">.</span><span class="n">MultipleLocator</span><span class="p">(</span><span class="mi">50</span><span class="p">))</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+<span class="c1"># ── Zoom on a Balmer wing to show the effect directly ────────────────────────</span>
+<span class="n">zoom_line</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">BALMER_LINES</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">kv</span><span class="p">:</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">wavelength</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">kv</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">wavelength</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+<span class="n">wl_zoom</span> <span class="o">=</span> <span class="n">zoom_line</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="k">if</span> <span class="n">wavelength</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">wl_zoom</span> <span class="o">&lt;=</span> <span class="n">wavelength</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+    <span class="n">half_win</span> <span class="o">=</span> <span class="mi">60</span>  <span class="c1"># Å</span>
+    <span class="n">m_zoom</span> <span class="o">=</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">&gt;=</span> <span class="n">wl_zoom</span> <span class="o">-</span> <span class="n">half_win</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">wavelength</span> <span class="o">&lt;=</span> <span class="n">wl_zoom</span> <span class="o">+</span> <span class="n">half_win</span><span class="p">)</span>
+
+    <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">16</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">wavelength</span><span class="p">[</span><span class="n">m_zoom</span><span class="p">],</span> <span class="n">flux</span><span class="p">[</span><span class="n">m_zoom</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="n">C_SPEC</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mf">1.1</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">'Spectrum'</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">wavelength</span><span class="p">[</span><span class="n">m_zoom</span><span class="p">],</span>
+                     <span class="mf">1.0</span> <span class="o">-</span> <span class="n">DETECTION_NSIGMA</span> <span class="o">*</span> <span class="n">noise_spectrum_photon_only</span><span class="p">[</span><span class="n">m_zoom</span><span class="p">],</span>
+                     <span class="mf">1.0</span> <span class="o">+</span> <span class="n">DETECTION_NSIGMA</span> <span class="o">*</span> <span class="n">noise_spectrum_photon_only</span><span class="p">[</span><span class="n">m_zoom</span><span class="p">],</span>
+                     <span class="n">color</span><span class="o">=</span><span class="s1">'seagreen'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.25</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">'±</span><span class="si">{</span><span class="n">DETECTION_NSIGMA</span><span class="si">}</span><span class="s1">σ — photon noise only (old)'</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span><span class="p">(</span><span class="n">wavelength</span><span class="p">[</span><span class="n">m_zoom</span><span class="p">],</span>
+                     <span class="mf">1.0</span> <span class="o">-</span> <span class="n">DETECTION_NSIGMA</span> <span class="o">*</span> <span class="n">noise_spectrum</span><span class="p">[</span><span class="n">m_zoom</span><span class="p">],</span>
+                     <span class="mf">1.0</span> <span class="o">+</span> <span class="n">DETECTION_NSIGMA</span> <span class="o">*</span> <span class="n">noise_spectrum</span><span class="p">[</span><span class="n">m_zoom</span><span class="p">],</span>
+                     <span class="n">color</span><span class="o">=</span><span class="s1">'black'</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.12</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">'±</span><span class="si">{</span><span class="n">DETECTION_NSIGMA</span><span class="si">}</span><span class="s1">σ — combined (new)'</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'Wavelength (Å)'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Normalised flux'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">zoom_line</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s1"> </span><span class="si">{</span><span class="n">wl_zoom</span><span class="si">:</span><span class="s1">.1f</span><span class="si">}</span><span class="s1"> Å wing — detection band before/after continuum-error term'</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">13</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">fontsize</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+    <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=b38562c2">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
+<h2 id="5-%C2%B7-Save-spectrum-+-error-bars-to-a-combined-FITS-file">5 · Save spectrum + error bars to a combined FITS file<a class="anchor-link" href="#5-%C2%B7-Save-spectrum-+-error-bars-to-a-combined-FITS-file">¶</a></h2><p>Writes <code>OUTPUT_FITS_FILE</code>, a 2-HDU FITS file:</p>
 <ul>
-<li><a href="../../Costellazioni/Ursa_Major/Alioth.html">Alioth</a> A1III-IVpkB9</li>
-<li><a href="../../Costellazioni/Hercules/Sarin.html">Sarin - Delta Her</a> A1IVn</li>
-<li><a href="../../Costellazioni/Ursa_Major/Merak.html">Merak</a> A1IVps</li>
-<li><a href="../../Costellazioni/Auriga/Menkalinan.html">Menkalinan</a> A1IV-Vp</li>
-<li><a href="../../Costellazioni/Gemini/Castor.html">Castor - Alpha Gem</a> A1V+A2Vm</li>
-<li><a href="../../Costellazioni/Gemini/Alhena.html">Alhena - Gamma Gem</a> A1.5IV+</li>
-<li><a href="../../Costellazioni/Ursa_Major/Mizar.html">Mizar - Zeta 01 UMa</a> A1.5Vas</li>
+<li><strong>Primary HDU</strong> — <code>flux</code> (continuum-normalised spectrum), with a WCS rebuilt so that
+pixel 1 corresponds to <code>wavelength[0]</code> (the array has already been trimmed to
+<code>WL_MIN</code>–<code>WL_MAX</code>), plus the identifying keywords (<code>OBJNAME</code>/<code>OBJECT</code>, <code>DATE-OBS</code>)
+and a <code>NOISELVL</code> keyword carrying the scalar reference-window noise level.</li>
+<li><strong><code>ERR</code> extension</strong> — <code>noise_spectrum</code>, the wavelength-dependent 1σ uncertainty
+(photon noise, optionally combined in quadrature with the continuum-placement
+systematic), on the exact same wavelength grid as the primary HDU.</li>
 </ul>
+<p><code>spectral_lines_finder.ipynb</code> reads both arrays straight out of this file.</p>
 </div>
 </div>
 </div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=205f5570">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=15e7e335">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="A2">A2<a class="anchor-link" href="#A2">¶</a></h2>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="c1"># ── Build the primary HDU: flux + WCS + identifying keywords ────────────────</span>
+<span class="n">primary_header</span> <span class="o">=</span> <span class="n">header</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+<span class="c1"># Rebuild the WCS so pixel 1 == wavelength[0] (the arrays were trimmed to</span>
+<span class="c1"># WL_MIN-WL_MAX above; CRVAL1/CRPIX1 from the original file no longer apply).</span>
+<span class="n">primary_header</span><span class="p">[</span><span class="s1">'CRVAL1'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">wavelength</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">primary_header</span><span class="p">[</span><span class="s1">'CRPIX1'</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">primary_header</span><span class="p">[</span><span class="s1">'CDELT1'</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="n">wavelength</span><span class="p">)))</span>
+
+<span class="c1"># Make sure the object name / obs date survive even if the rectified file's</span>
+<span class="c1"># own header was missing them (get_object_name/get_obs_date already fell</span>
+<span class="c1"># back to RAW_FITS_FILE for this above).</span>
+<span class="n">primary_header</span><span class="p">[</span><span class="s1">'OBJNAME'</span><span class="p">]</span>  <span class="o">=</span> <span class="n">OBJECT_NAME</span>
+<span class="k">if</span> <span class="n">OBS_DATE</span><span class="p">:</span>
+    <span class="n">primary_header</span><span class="p">[</span><span class="s1">'DATE-OBS'</span><span class="p">]</span> <span class="o">=</span> <span class="n">OBS_DATE</span>
+
+<span class="c1"># Carry the noise-estimation bookkeeping along for downstream reference /</span>
+<span class="c1"># reproducibility, even though the array itself lives in the ERR extension.</span>
+<span class="n">primary_header</span><span class="p">[</span><span class="s1">'NOISELVL'</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">NOISE_LEVEL</span><span class="p">),</span> <span class="s1">'1-sigma noise at the reference window'</span><span class="p">)</span>
+<span class="n">primary_header</span><span class="p">[</span><span class="s1">'NSEWLMIN'</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">NOISE_WL_MIN</span><span class="p">),</span> <span class="s1">'Noise reference window lower bound [A]'</span><span class="p">)</span>
+<span class="n">primary_header</span><span class="p">[</span><span class="s1">'NSEWLMAX'</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">NOISE_WL_MAX</span><span class="p">),</span> <span class="s1">'Noise reference window upper bound [A]'</span><span class="p">)</span>
+<span class="n">primary_header</span><span class="p">[</span><span class="s1">'CONTERR'</span><span class="p">]</span>  <span class="o">=</span> <span class="p">(</span><span class="nb">bool</span><span class="p">(</span><span class="n">ADD_CONTINUUM_ERROR</span><span class="p">),</span> <span class="s1">'Continuum-placement systematic folded into ERR?'</span><span class="p">)</span>
+<span class="n">primary_header</span><span class="p">[</span><span class="s1">'HISTORY'</span><span class="p">]</span>  <span class="o">=</span> <span class="s1">'Spectrum + noise_spectrum written by spectral_noise.ipynb'</span>
+
+<span class="n">primary_hdu</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">PrimaryHDU</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">flux</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">header</span><span class="o">=</span><span class="n">primary_header</span><span class="p">)</span>
+
+<span class="c1"># ── Build the ERR extension: same WCS, no need for the extra bookkeeping ────</span>
+<span class="n">err_header</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">Header</span><span class="p">()</span>
+<span class="n">err_header</span><span class="p">[</span><span class="s1">'CRVAL1'</span><span class="p">]</span> <span class="o">=</span> <span class="n">primary_header</span><span class="p">[</span><span class="s1">'CRVAL1'</span><span class="p">]</span>
+<span class="n">err_header</span><span class="p">[</span><span class="s1">'CRPIX1'</span><span class="p">]</span> <span class="o">=</span> <span class="n">primary_header</span><span class="p">[</span><span class="s1">'CRPIX1'</span><span class="p">]</span>
+<span class="n">err_header</span><span class="p">[</span><span class="s1">'CDELT1'</span><span class="p">]</span> <span class="o">=</span> <span class="n">primary_header</span><span class="p">[</span><span class="s1">'CDELT1'</span><span class="p">]</span>
+<span class="n">err_header</span><span class="p">[</span><span class="s1">'BUNIT'</span><span class="p">]</span>  <span class="o">=</span> <span class="s1">'Normalised flux (1-sigma)'</span>
+<span class="n">err_hdu</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">ImageHDU</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">noise_spectrum</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">header</span><span class="o">=</span><span class="n">err_header</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s1">'ERR'</span><span class="p">)</span>
+
+<span class="n">hdul_out</span> <span class="o">=</span> <span class="n">fits</span><span class="o">.</span><span class="n">HDUList</span><span class="p">([</span><span class="n">primary_hdu</span><span class="p">,</span> <span class="n">err_hdu</span><span class="p">])</span>
+<span class="n">hdul_out</span><span class="o">.</span><span class="n">writeto</span><span class="p">(</span><span class="n">OUTPUT_FITS_FILE</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Wrote </span><span class="si">{</span><span class="n">OUTPUT_FITS_FILE</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  Primary HDU (flux)           : </span><span class="si">{</span><span class="n">flux</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s1"> px,  </span><span class="si">{</span><span class="n">wavelength</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">wavelength</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="si">:</span><span class="s1">.2f</span><span class="si">}</span><span class="s1"> A'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  ERR extension (noise_spectrum): </span><span class="si">{</span><span class="n">noise_spectrum</span><span class="o">.</span><span class="n">size</span><span class="si">}</span><span class="s1"> px'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  NOISELVL (reference-window sigma): </span><span class="si">{</span><span class="n">NOISE_LEVEL</span><span class="si">:</span><span class="s1">.5f</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'  Continuum-placement systematic folded in: </span><span class="si">{</span><span class="n">ADD_CONTINUUM_ERROR</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+</pre></div>
 </div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=21b8b60a">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li><a href="../../Costellazioni/Cepheus/Nu_Cep.html">Nu Cep</a> A2Ia</li>
-<li><a href="../../Costellazioni/Ursa_Minor/Pherkad.html">Pherkad</a> A2III</li>
-<li><a href="../../Costellazioni/Camelopardalis/Gamma_Cam.html">Gamma Camelopardalis</a> A2IVn</li>
-<li><a href="../../Costellazioni/Cygnus/b3_Cyg.html">b3 Cyg</a> A2V</li>
-<li><a href="../../Costellazioni/Virgo/Heze.html">Heze - Zeta Vir</a> A2Van</li>
-<li><a href="../../Costellazioni/Lynx/2_Lyn.html">2 Lyn</a> A2Vs</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=02f43633">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="A3">A3<a class="anchor-link" href="#A3">¶</a></h2>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=72bfb515">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li><a href="../../Costellazioni/Eridanus/Cursa.html">Cursa - Beta Eri</a> A3IV</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=5bc9b999">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="A4">A4<a class="anchor-link" href="#A4">¶</a></h2>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=bde0dca3">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="A5">A5<a class="anchor-link" href="#A5">¶</a></h2>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ee6df37d">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li><a href="../../Costellazioni/Cassiopeia/Ruchbah.html">Ruchbah - Delta Cas</a> A5IV</li>
-<li><a href="../../Costellazioni/Leo/Zosma.html">Zosma - Delta Leo</a> A5IV(n)</li>
-<li><a href="../../Costellazioni/Aries/Sheratan.html">Sheratan</a> kA4hA5mA5Va</li>
-<li><a href="../../Costellazioni/Libra/Alpha_2_lib.html">Alpha 2 Lib</a> kA2hA5mA4IV-V</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=cc376c12">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="A6">A6<a class="anchor-link" href="#A6">¶</a></h2>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=a7e00b81">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="A7">A7<a class="anchor-link" href="#A7">¶</a></h2>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=557f1bd0">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li><a href="../../Costellazioni/Bootes/Kappa2_Boo.html">Kappa2 Boo</a> A7IV</li>
-<li><a href="../../Costellazioni/Bootes/Iota_Boo.html">Iota Boo</a> A7V</li>
-<li><a href="../../Costellazioni/Aquila/Altair.html">Altair - Alpha Aql</a> A7Vn</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=6b470476">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="A8">A8<a class="anchor-link" href="#A8">¶</a></h2>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=ca277c33">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<ul>
-<li><a href="../../Costellazioni/Lacerta/9_Lac.html">9 Lac</a> A8IV</li>
-<li><a href="../../Costellazioni/Cepheus/Alderamin.html">Alderamin</a> A8Vn</li>
-</ul>
-</div>
-</div>
-</div>
-</div>
-<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell" id="cell-id=f46edb23">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="A9">A9<a class="anchor-link" href="#A9">¶</a></h2>
 </div>
 </div>
 </div>

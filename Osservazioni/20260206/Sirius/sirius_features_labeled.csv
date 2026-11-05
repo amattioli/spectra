@@ -1,0 +1,105 @@
+﻿short_label,rank,wavelength_A,amplitude,fwhm_A,tag,label_status,discard_reason,labels
+H-14  3722,A,3720.58,0.1361,5.28,other,confirmed,,H I 3721.9
+H-13  3734,A,3733.32,0.2465,6.51,other,confirmed,,H I 3734.4
+H-12  3750,A,3748.89,0.3376,7.84,other,confirmed,,"H I 3750.1, H I 3750.2"
+H-11  3771,A,3769.91,0.4438,10.04,other,confirmed,,"H I 3770.6, H I 3770.7"
+H-10  3798,A,3797.13,0.5652,12.66,other,confirmed,,H I 3797.9
+Fe I 3805,A,3805.85,0.0248,4.34,other,confirmed,,Fe I 3805.3
+Fe I 3813,A,3809.65,0.0159,8.37,other,confirmed,,Fe I 3813.0
+Fe I 3826,A,3824.77,0.0326,5.47,other,confirmed,,Fe I 3825.9
+H-9  3835,A,3834.77,0.6318,14.5,Balmer,confirmed,,H I 3835.4
+S I 3846,A,3846.27,0.0504,7.3,other,confirmed,,S I 3846.0
+Fe I 3850,A,3850.66,0.0099,11.06,other,confirmed,,Fe I 3850.0
+H-8  3889,A,3889.77,0.5843,32.37,Balmer,confirmed,,"H I 3889.0, H I 3889.1"
+Ca II 3934,A,3933.59,0.0931,6.74,other,confirmed,,Ca II 3933.7
+Al I 3962,A,3958.6,0.0334,5.77,other,confirmed,,Al I 3961.5
+Hε  3970,A,3969.94,0.6962,18.08,Balmer,confirmed,,"H I 3970.0, H I 3970.1"
+,A,3982.82,0.0339,8.85,other,uncertain_discarded,confirm frac too low (0.32),
+He I 4026,A,4028.17,0.0199,14.17,other,confirmed,,He I 4026.2
+,A,4087.87,0.0224,13.92,other,uncertain_discarded,confirm frac too low (0.31),
+Hδ  4102,A,4102.0,0.6729,18.57,Balmer,confirmed,,"H I 4101.7, H I 4101.8"
+,A,4116.55,0.0264,9.85,other,uncertain_discarded,confirm frac too low (0.26),
+Si II 4131,A,4129.51,0.0442,8.57,other,confirmed,,Si II 4130.9
+Fe II/Ti II 4172-73,A,4172.59,0.0126,3.53,other,confirmed,,"Fe II 4173.4, Ti II 4171.9"
+Fe II 4179,A,4177.72,0.0305,8.07,other,confirmed,,Fe II 4178.9
+Fe I 4188,A,4187.96,0.0079,3.49,other,confirmed,,Fe I 4187.8
+Fe I 4199,A,4200.32,0.021,5.26,other,confirmed,,Fe I 4199.1
+Sr II 4216,A,4217.06,0.0097,3.91,other,confirmed,,Sr II 4215.5
+Fe II 4233,A,4234.0,0.025,17.45,other,confirmed,,Fe II 4233.2
+Fe I 4251,A,4251.89,0.0201,9.27,other,confirmed,,Fe I 4250.8
+Fe I/Cr II 4260-62,A,4260.8,0.0191,4.62,other,confirmed,,"Fe I 4260.5, Cr II 4261.9"
+Fe I 4272,A,4273.16,0.0311,5.43,other,confirmed,,Fe I 4271.8
+Ti II 4315,A,4316.37,0.0049,18.59,other,confirmed,,Ti II 4315.0
+Fe I 4326,A,4327.58,0.0363,7.11,other,confirmed,,Fe I 4325.8
+Hγ  4340,A,4340.64,0.6354,18.0,Balmer,confirmed,,"H I 4340.4, H I 4340.5"
+Fe II 4352,A,4353.49,0.0379,8.92,other,confirmed,,Fe II 4351.8
+Fe I 4384,A,4382.69,0.0022,8.12,other,confirmed,,Fe I 4383.5
+Fe II 4385,A,4385.02,0.0267,4.57,other,confirmed,,Fe II 4385.4
+Ti II 4395,A,4392.4,0.0135,12.56,other,confirmed,,Ti II 4395.0
+Fe I 4405,A,4403.92,0.0053,3.32,other,confirmed,,Fe I 4404.8
+Fe II/Ti II 4417-18,A,4416.89,0.019,4.04,other,confirmed,,"Fe II 4416.8, Ti II 4417.7"
+Ti II 4444,A,4444.35,0.0137,3.48,other,confirmed,,Ti II 4443.8
+Ti II/He I 4468-71,A,4470.43,0.016,7.05,other,confirmed,,"Ti II 4468.5, He I 4471.5"
+Mg II 4481,A,4481.3,0.0715,5.5,other,confirmed,,"Mg II 4481.1, Mg II 4481.3"
+Fe II 4489-91,A,4490.27,0.0148,5.65,other,confirmed,,"Fe II 4491.4, Fe II 4489.2"
+Fe II 4520-23,A,4521.92,0.0103,5.73,other,confirmed,,"Fe II 4522.6, Fe II 4520.2"
+Fe I 4525,A,4524.54,0.0074,16.7,other,confirmed,,Fe I 4525.1
+Ti II 4534,A,4533.58,0.0121,3.76,other,confirmed,,Ti II 4534.0
+Ti II/Fe II 4549-50,A,4549.07,0.0169,3.58,other,confirmed,,"Ti II 4549.6, Fe II 4549.5"
+Ba II/Cr II 4554-55,A,4553.96,0.0349,10.14,other,confirmed,,"Ba II 4554.0, Cr II 4555.0"
+Fe II/Cr II 4556-59,A,4557.0,0.0043,3.26,other,confirmed,,"Fe II 4555.9, Cr II 4558.6"
+Ti II 4564,A,4564.12,0.0038,1.88,other,confirmed,,Ti II 4563.8
+Fe II 4584,A,4585.35,0.0245,13.52,other,confirmed,,Fe II 4583.8
+Cr II 4619,A,4618.9,0.0203,6.52,other,confirmed,,Cr II 4618.8
+Cr II/Fe II 4629-34,A,4632.15,0.0228,11.33,other,confirmed,,"Cr II 4634.1, Fe II 4629.3"
+Fe II 4667,A,4666.71,0.0144,6.42,other,confirmed,,Fe II 4666.8
+Mg I 4703,A,4703.22,0.0044,4.97,other,confirmed,,Mg I 4703.0
+Fe II 4731,A,4732.51,0.0062,6.8,other,confirmed,,Fe II 4731.4
+Ti II 4764,A,4765.21,0.0029,6.34,other,confirmed,,Ti II 4763.9
+,A,4846.13,0.05,13.29,other,uncertain_discarded,confirm frac too low (0.18),
+Hβ  4861,A,4861.07,0.572,19.09,Balmer,confirmed,,"H I 4861.3, H I 4861.4"
+Cr II 4876,A,4876.81,0.0367,14.83,other,confirmed,,Cr II 4876.4
+Cr II 4885,A,4883.86,0.014,19.52,other,confirmed,,Cr II 4884.6
+Fe II 4924,A,4922.31,0.0196,4.64,other,confirmed,,Fe II 4923.9
+Ba II 4934,A,4935.07,0.0085,4.21,other,confirmed,,Ba II 4934.1
+Fe I 4958,A,4956.42,0.0123,5.3,other,confirmed,,Fe I 4957.6
+Fe I 4982,A,4983.16,0.0062,3.82,other,confirmed,,Fe I 4982.5
+Fe II 5002,A,5004.41,0.0116,6.17,other,confirmed,,Fe II 5001.9
+Fe II 5018,A,5018.05,0.0275,6.27,other,confirmed,,Fe II 5018.4
+Si II 5041,A,5038.53,0.0176,8.48,other,confirmed,,Si II 5041.0
+Si II 5056,A,5056.05,0.014,4.67,other,confirmed,,Si II 5056.0
+Fe II 5101,A,5099.53,0.0102,5.57,other,confirmed,,Fe II 5100.7
+Fe II 5169,A,5168.98,0.0335,6.74,other,confirmed,,Fe II 5169.0
+Fe II 5235,A,5231.28,0.0202,10.93,other,confirmed,,Fe II 5234.6
+Fe II 5317,A,5316.08,0.0251,8.25,other,confirmed,,Fe II 5316.6
+Fe II 5326,A,5326.26,0.0059,4.87,other,confirmed,,Fe II 5325.6
+Cr II 5335,A,5333.97,0.0092,20.0,other,confirmed,,Cr II 5334.9
+Fe II 5363,A,5365.31,0.014,9.11,other,confirmed,,Fe II 5362.9
+Cr II/Ni I 5477-78,A,5477.36,0.0052,3.89,other,confirmed,,"Cr II 5478.4, Ni I 5476.9"
+Fe II 5506,A,5505.62,0.0082,7.77,other,confirmed,,Fe II 5506.2
+Fe II/Mg I 5528-35,A,5531.86,0.0081,7.74,other,confirmed,,"Fe II 5534.8, Mg I 5528.4"
+,A,5686.7,0.0061,8.16,other,uncertain_discarded,confirm frac too low (0.30),
+,A,5783.94,0.0062,13.95,other,uncertain_discarded,confirm frac too low (0.31),
+,A,5920.42,0.0445,16.64,other,uncertain_discarded,confirm frac too low (0.01),
+,A,5945.19,0.0591,12.7,other,uncertain_discarded,confirm frac too low (0.01),
+,A,5958.0,0.0192,6.05,other,uncertain_discarded,confirm frac too low (0.31),
+,A,5969.42,0.0286,20.0,other,uncertain_discarded,confirm frac too low (0.01),
+,A,5988.31,0.0193,20.0,other,uncertain_discarded,confirm frac too low (0.10),
+,A,6015.0,0.0057,20.0,other,uncertain_discarded,confirm frac too low (0.03),
+O I 6156,A,6152.73,0.0072,19.05,other,confirmed,,O I 6156.0
+Fe II 6248,A,6244.12,0.0139,15.29,other,confirmed,,Fe II 6247.6
+,A,6279.17,0.0731,7.89,other,uncertain_discarded,confirm frac too low (0.00),
+,A,6295.63,0.023,19.44,other,uncertain_discarded,confirm frac too low (0.02),
+Si II 6347,A,6347.71,0.025,5.76,other,confirmed,,Si II 6347.1
+Si II 6371,A,6371.95,0.0189,5.37,other,confirmed,,Si II 6371.4
+Fe II 6417,A,6417.13,0.0061,5.68,other,confirmed,,Fe II 6416.9
+Fe II 6456,A,6457.7,0.0207,7.96,other,confirmed,,Fe II 6456.4
+,A,6476.19,0.0066,3.44,other,no_lines_in_window,,
+,A,6485.2,0.0077,4.66,other,uncertain_discarded,confirm frac too low (0.26),
+,A,6494.69,0.0251,7.35,other,uncertain_discarded,confirm frac too low (0.17),
+,A,6517.42,0.0534,7.06,other,uncertain_discarded,confirm frac too low (0.05),
+,A,6540.17,0.0252,19.38,other,uncertain_discarded,confirm frac too low (0.03),
+,A,6549.05,0.0425,10.04,other,uncertain_discarded,confirm frac too low (0.08),
+Hα  6563,A,6563.38,0.4445,18.5,Balmer,confirmed,,"H I 6562.9, H I 6562.7"
+,A,6576.69,0.022,8.02,other,uncertain_discarded,confirm frac too low (0.01),
+,A,6584.61,0.0263,20.0,other,uncertain_discarded,confirm frac too low (0.02),

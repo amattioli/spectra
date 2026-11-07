@@ -7529,7 +7529,8 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [1]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
 <span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">'../../../src'</span><span class="p">)</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">spectrum</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">spec</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
@@ -7968,7 +7969,7 @@ a.anchor-link {
 </div>
 </div>
 </div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=03ef19d2-b877-4aef-ab2c-f237569da107">
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs" id="cell-id=7207135f-91c3-4662-8693-93ecd8570711">
 <div class="jp-Cell-inputWrapper" tabindex="0">
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
@@ -7976,9 +7977,70 @@ a.anchor-link {
 <div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div>
 <div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="cm-editor cm-s-jupyter">
-<div class="highlight hl-ipython3"><pre><span></span><span class="n">measures</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">"line_measured_saiph_20260206.csv"</span><span class="p">)</span>
+<div class="highlight hl-ipython3"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">round_measurement</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">error</span><span class="p">):</span>
+    <span class="n">exponent</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">error</span><span class="p">))</span>
+    <span class="n">first_digit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">error</span> <span class="o">/</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="n">exponent</span><span class="p">))</span>
 
-<span class="n">measures</span>
+    <span class="n">sig_figs</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">first_digit</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span>
+
+    <span class="n">decimals</span> <span class="o">=</span> <span class="n">sig_figs</span> <span class="o">-</span> <span class="n">exponent</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="n">value_rounded</span> <span class="o">=</span> <span class="nb">round</span> <span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">decimals</span><span class="p">)</span>
+    <span class="n">error_rounded</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="n">decimals</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">value_rounded</span><span class="p">,</span> <span class="n">error_rounded</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell" id="cell-id=3c0e996b-930b-47fa-8103-4a72251443f0">
+<div class="jp-Cell-inputWrapper" tabindex="0">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div>
+<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="cm-editor cm-s-jupyter">
+<div class="highlight hl-ipython3"><pre><span></span><span class="n">final_results</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">"line_measured_saiph_20260206.csv"</span><span class="p">)</span>
+
+<span class="c1"># Relative errors (%)</span>
+<span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"wavelength"</span><span class="p">,</span> <span class="s2">"ew"</span><span class="p">,</span> <span class="s2">"fwhm"</span><span class="p">,</span> <span class="s2">"intensity"</span><span class="p">]:</span>
+    <span class="n">final_results</span><span class="p">[</span><span class="s2">"rel_err_"</span> <span class="o">+</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="n">final_results</span><span class="p">[</span><span class="s2">"delta_"</span> <span class="o">+</span> <span class="n">col</span><span class="p">]</span> <span class="o">/</span> <span class="n">final_results</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+
+<span class="c1"># Approximate values and errors consistently </span>
+<span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"wavelength"</span><span class="p">,</span> <span class="s2">"ew"</span><span class="p">,</span> <span class="s2">"fwhm"</span><span class="p">,</span> <span class="s2">"intensity"</span><span class="p">]:</span>
+    <span class="n">rounded</span> <span class="o">=</span> <span class="p">[</span><span class="n">round_measurement</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">final_results</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">final_results</span><span class="p">[</span><span class="s2">"delta_"</span> <span class="o">+</span> <span class="n">col</span><span class="p">])]</span>
+    <span class="n">final_results</span><span class="p">[</span><span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rounded</span><span class="p">]</span>
+    <span class="n">final_results</span><span class="p">[</span><span class="s2">"delta_"</span> <span class="o">+</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">r</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rounded</span><span class="p">]</span>
+    <span class="c1"># relative error in %, 2 significant figures</span>
+    <span class="n">final_results</span><span class="p">[</span><span class="s2">"rel_err_"</span> <span class="o">+</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="n">final_results</span><span class="p">[</span><span class="s2">"rel_err_"</span> <span class="o">+</span> <span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">x</span><span class="si">:</span><span class="s2">.2g</span><span class="si">}</span><span class="s2">"</span><span class="p">))</span>
+
+<span class="n">final_results</span> <span class="o">=</span> <span class="n">final_results</span><span class="p">[[</span><span class="s2">"line_name"</span><span class="p">,</span>
+    <span class="s2">"wavelength"</span><span class="p">,</span> <span class="s2">"delta_wavelength"</span><span class="p">,</span> <span class="s2">"rel_err_wavelength"</span><span class="p">,</span>
+    <span class="s2">"ew"</span><span class="p">,</span> <span class="s2">"delta_ew"</span><span class="p">,</span> <span class="s2">"rel_err_ew"</span><span class="p">,</span>
+    <span class="s2">"fwhm"</span><span class="p">,</span> <span class="s2">"delta_fwhm"</span><span class="p">,</span> <span class="s2">"rel_err_fwhm"</span><span class="p">,</span>
+    <span class="s2">"intensity"</span><span class="p">,</span> <span class="s2">"delta_intensity"</span><span class="p">,</span> <span class="s2">"rel_err_intensity"</span><span class="p">]]</span>
+
+<span class="c1"># Readable column names</span>
+<span class="n">final_results</span> <span class="o">=</span> <span class="n">final_results</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span>
+    <span class="s2">"line_name"</span><span class="p">:</span> <span class="s2">"Line"</span><span class="p">,</span>
+    <span class="s2">"wavelength"</span><span class="p">:</span> <span class="s2">"Wavelength (Å)"</span><span class="p">,</span>
+    <span class="s2">"delta_wavelength"</span><span class="p">:</span> <span class="s2">"Wavelength error (Å)"</span><span class="p">,</span>
+    <span class="s2">"rel_err_wavelength"</span><span class="p">:</span> <span class="s2">"Wavelength error (%)"</span><span class="p">,</span>
+    <span class="s2">"ew"</span><span class="p">:</span> <span class="s2">"EW (Å)"</span><span class="p">,</span>
+    <span class="s2">"delta_ew"</span><span class="p">:</span> <span class="s2">"EW error (Å)"</span><span class="p">,</span>
+    <span class="s2">"rel_err_ew"</span><span class="p">:</span> <span class="s2">"EW error (%)"</span><span class="p">,</span>
+    <span class="s2">"fwhm"</span><span class="p">:</span> <span class="s2">"FWHM (Å)"</span><span class="p">,</span>
+    <span class="s2">"delta_fwhm"</span><span class="p">:</span> <span class="s2">"FWHM error (Å)"</span><span class="p">,</span>
+    <span class="s2">"rel_err_fwhm"</span><span class="p">:</span> <span class="s2">"FWHM error (%)"</span><span class="p">,</span>
+    <span class="s2">"intensity"</span><span class="p">:</span> <span class="s2">"Intensity"</span><span class="p">,</span>
+    <span class="s2">"delta_intensity"</span><span class="p">:</span> <span class="s2">"Intensity error"</span><span class="p">,</span>
+    <span class="s2">"rel_err_intensity"</span><span class="p">:</span> <span class="s2">"Intensity error (%)"</span><span class="p">,</span>
+<span class="p">})</span>
+
+<span class="n">final_results</span>
 </pre></div>
 </div>
 </div>
@@ -7989,7 +8051,7 @@ a.anchor-link {
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[13]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[14]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -8009,421 +8071,517 @@ a.anchor-link {
 <thead>
 <tr style="text-align: right;">
 <th></th>
-<th>Unnamed: 0</th>
-<th>line_name</th>
-<th>wavelength</th>
-<th>delta_wavelength</th>
-<th>ew</th>
-<th>delta_ew</th>
-<th>fwhm</th>
-<th>delta_fwhm</th>
-<th>intensity</th>
-<th>delta_intensity</th>
+<th>Line</th>
+<th>Wavelength (Å)</th>
+<th>Wavelength error (Å)</th>
+<th>Wavelength error (%)</th>
+<th>EW (Å)</th>
+<th>EW error (Å)</th>
+<th>EW error (%)</th>
+<th>FWHM (Å)</th>
+<th>FWHM error (Å)</th>
+<th>FWHM error (%)</th>
+<th>Intensity</th>
+<th>Intensity error</th>
+<th>Intensity error (%)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <th>0</th>
-<td>4</td>
 <td>He I 6678</td>
-<td>6679.281600</td>
-<td>0.014463</td>
-<td>1.011471</td>
-<td>0.024090</td>
-<td>7.278393</td>
-<td>0.133320</td>
-<td>-0.130551</td>
-<td>0.000903</td>
+<td>6679.282</td>
+<td>0.014</td>
+<td>0.00022</td>
+<td>1.0110</td>
+<td>0.0240</td>
+<td>2.4</td>
+<td>7.280</td>
+<td>0.130</td>
+<td>1.80</td>
+<td>-0.1306</td>
+<td>0.0009</td>
+<td>0.69</td>
 </tr>
 <tr>
 <th>1</th>
-<td>5</td>
 <td>unknown 6595</td>
-<td>6597.277736</td>
-<td>1.845242</td>
-<td>0.000617</td>
-<td>0.002295</td>
-<td>4.744455</td>
-<td>4.079310</td>
-<td>-0.000135</td>
-<td>0.000459</td>
+<td>6597.300</td>
+<td>1.800</td>
+<td>0.02800</td>
+<td>0.0006</td>
+<td>0.0023</td>
+<td>370.0</td>
+<td>5.000</td>
+<td>4.000</td>
+<td>86.00</td>
+<td>-0.0001</td>
+<td>0.0005</td>
+<td>340.00</td>
 </tr>
 <tr>
 <th>2</th>
-<td>4</td>
 <td>unknown 6580</td>
-<td>6583.590113</td>
-<td>0.612267</td>
-<td>0.024200</td>
-<td>0.008848</td>
-<td>4.648141</td>
-<td>0.835228</td>
-<td>-0.004798</td>
-<td>0.001475</td>
+<td>6583.600</td>
+<td>0.600</td>
+<td>0.00930</td>
+<td>0.0240</td>
+<td>0.0090</td>
+<td>37.0</td>
+<td>4.600</td>
+<td>0.800</td>
+<td>18.00</td>
+<td>-0.0048</td>
+<td>0.0015</td>
+<td>31.00</td>
 </tr>
 <tr>
 <th>3</th>
-<td>3</td>
 <td>H alfa</td>
-<td>6562.521795</td>
-<td>0.391276</td>
-<td>2.222444</td>
-<td>0.771042</td>
-<td>17.174830</td>
-<td>5.097747</td>
-<td>-0.083200</td>
-<td>0.003260</td>
+<td>6562.500</td>
+<td>0.400</td>
+<td>0.00600</td>
+<td>2.2000</td>
+<td>0.8000</td>
+<td>35.0</td>
+<td>17.000</td>
+<td>5.000</td>
+<td>30.00</td>
+<td>-0.0830</td>
+<td>0.0030</td>
+<td>3.90</td>
 </tr>
 <tr>
 <th>4</th>
-<td>2</td>
 <td>unknown 6550</td>
-<td>6546.212429</td>
-<td>0.814029</td>
-<td>0.056577</td>
-<td>0.015402</td>
-<td>5.278023</td>
-<td>0.636251</td>
-<td>-0.009957</td>
-<td>0.001815</td>
+<td>6546.200</td>
+<td>0.800</td>
+<td>0.01200</td>
+<td>0.0570</td>
+<td>0.0150</td>
+<td>27.0</td>
+<td>5.300</td>
+<td>0.600</td>
+<td>12.00</td>
+<td>-0.0100</td>
+<td>0.0018</td>
+<td>18.00</td>
 </tr>
 <tr>
 <th>5</th>
-<td>1</td>
 <td>unknown 6535</td>
-<td>6533.706690</td>
-<td>1.065716</td>
-<td>0.029880</td>
-<td>0.033838</td>
-<td>4.582422</td>
-<td>2.834928</td>
-<td>-0.005698</td>
-<td>0.005005</td>
+<td>6533.700</td>
+<td>1.100</td>
+<td>0.01600</td>
+<td>0.0300</td>
+<td>0.0300</td>
+<td>110.0</td>
+<td>4.600</td>
+<td>2.800</td>
+<td>62.00</td>
+<td>-0.0060</td>
+<td>0.0050</td>
+<td>88.00</td>
 </tr>
 <tr>
 <th>6</th>
-<td>0</td>
 <td>unknown 6520</td>
-<td>6516.459043</td>
-<td>0.962838</td>
-<td>0.540609</td>
-<td>0.388159</td>
-<td>10.807278</td>
-<td>8.001575</td>
-<td>-0.047126</td>
-<td>0.002774</td>
+<td>6516.500</td>
+<td>1.000</td>
+<td>0.01500</td>
+<td>0.5000</td>
+<td>0.4000</td>
+<td>72.0</td>
+<td>11.000</td>
+<td>8.000</td>
+<td>74.00</td>
+<td>-0.0471</td>
+<td>0.0028</td>
+<td>5.90</td>
 </tr>
 <tr>
 <th>7</th>
-<td>3</td>
 <td>He I 4922</td>
-<td>4922.504419</td>
-<td>0.009666</td>
-<td>0.698655</td>
-<td>0.018322</td>
-<td>6.666608</td>
-<td>0.118041</td>
-<td>-0.098445</td>
-<td>0.000841</td>
+<td>4922.504</td>
+<td>0.010</td>
+<td>0.00020</td>
+<td>0.6990</td>
+<td>0.0180</td>
+<td>2.6</td>
+<td>6.670</td>
+<td>0.120</td>
+<td>1.80</td>
+<td>-0.0984</td>
+<td>0.0008</td>
+<td>0.85</td>
 </tr>
 <tr>
 <th>8</th>
-<td>0</td>
 <td>H beta</td>
-<td>4861.550366</td>
-<td>0.009108</td>
-<td>1.867035</td>
-<td>0.089169</td>
-<td>8.365612</td>
-<td>0.009313</td>
-<td>-0.195945</td>
-<td>0.002126</td>
+<td>4861.550</td>
+<td>0.009</td>
+<td>0.00019</td>
+<td>1.8700</td>
+<td>0.0900</td>
+<td>4.8</td>
+<td>8.366</td>
+<td>0.009</td>
+<td>0.11</td>
+<td>-0.1959</td>
+<td>0.0021</td>
+<td>1.10</td>
 </tr>
 <tr>
 <th>9</th>
-<td>3</td>
 <td>He I 4713</td>
-<td>4713.690830</td>
-<td>0.026363</td>
-<td>0.299500</td>
-<td>0.029975</td>
-<td>5.354123</td>
-<td>0.258999</td>
-<td>-0.052422</td>
-<td>0.002748</td>
+<td>4713.691</td>
+<td>0.026</td>
+<td>0.00056</td>
+<td>0.2990</td>
+<td>0.0300</td>
+<td>10.0</td>
+<td>5.350</td>
+<td>0.260</td>
+<td>4.80</td>
+<td>-0.0524</td>
+<td>0.0027</td>
+<td>5.20</td>
 </tr>
 <tr>
 <th>10</th>
-<td>2</td>
 <td>O II 4705</td>
-<td>4706.490121</td>
-<td>0.260570</td>
-<td>0.202010</td>
-<td>0.028690</td>
-<td>8.768367</td>
-<td>0.173278</td>
-<td>-0.021645</td>
-<td>0.003042</td>
+<td>4706.490</td>
+<td>0.260</td>
+<td>0.00550</td>
+<td>0.2020</td>
+<td>0.0290</td>
+<td>14.0</td>
+<td>8.770</td>
+<td>0.170</td>
+<td>2.00</td>
+<td>-0.0220</td>
+<td>0.0030</td>
+<td>14.00</td>
 </tr>
 <tr>
 <th>11</th>
-<td>1</td>
 <td>O II 4699</td>
-<td>4700.067428</td>
-<td>0.203877</td>
-<td>0.063606</td>
-<td>0.008119</td>
-<td>4.663512</td>
-<td>0.218619</td>
-<td>-0.012791</td>
-<td>0.001310</td>
+<td>4700.070</td>
+<td>0.200</td>
+<td>0.00430</td>
+<td>0.0640</td>
+<td>0.0080</td>
+<td>13.0</td>
+<td>4.660</td>
+<td>0.220</td>
+<td>4.70</td>
+<td>-0.0128</td>
+<td>0.0013</td>
+<td>10.00</td>
 </tr>
 <tr>
 <th>12</th>
-<td>0</td>
 <td>He II 4686</td>
-<td>4683.690106</td>
-<td>1.242548</td>
-<td>0.365492</td>
-<td>0.161436</td>
-<td>17.857548</td>
-<td>7.418648</td>
-<td>-0.019475</td>
-<td>0.002854</td>
+<td>4683.700</td>
+<td>1.200</td>
+<td>0.02700</td>
+<td>0.3700</td>
+<td>0.1600</td>
+<td>44.0</td>
+<td>18.000</td>
+<td>7.000</td>
+<td>42.00</td>
+<td>-0.0195</td>
+<td>0.0029</td>
+<td>15.00</td>
 </tr>
 <tr>
 <th>13</th>
-<td>1</td>
 <td>Si III 4575</td>
-<td>4575.104381</td>
-<td>0.137277</td>
-<td>0.099181</td>
-<td>0.028434</td>
-<td>4.382567</td>
-<td>0.533506</td>
-<td>-0.020832</td>
-<td>0.003662</td>
+<td>4575.100</td>
+<td>0.140</td>
+<td>0.00300</td>
+<td>0.0990</td>
+<td>0.0280</td>
+<td>29.0</td>
+<td>4.400</td>
+<td>0.500</td>
+<td>12.00</td>
+<td>-0.0210</td>
+<td>0.0040</td>
+<td>18.00</td>
 </tr>
 <tr>
 <th>14</th>
-<td>0</td>
 <td>Si III 4568</td>
-<td>4568.707202</td>
-<td>0.045727</td>
-<td>0.208258</td>
-<td>0.029726</td>
-<td>4.918997</td>
-<td>0.322002</td>
-<td>-0.039577</td>
-<td>0.003188</td>
+<td>4568.710</td>
+<td>0.050</td>
+<td>0.00100</td>
+<td>0.2080</td>
+<td>0.0300</td>
+<td>14.0</td>
+<td>4.900</td>
+<td>0.300</td>
+<td>6.50</td>
+<td>-0.0400</td>
+<td>0.0030</td>
+<td>8.10</td>
 </tr>
 <tr>
 <th>15</th>
-<td>5</td>
 <td>Si III 4553</td>
-<td>4553.015607</td>
-<td>0.030261</td>
-<td>0.275969</td>
-<td>0.025634</td>
-<td>5.100451</td>
-<td>0.287901</td>
-<td>-0.050728</td>
-<td>0.001887</td>
+<td>4553.020</td>
+<td>0.030</td>
+<td>0.00066</td>
+<td>0.2760</td>
+<td>0.0260</td>
+<td>9.3</td>
+<td>5.100</td>
+<td>0.290</td>
+<td>5.60</td>
+<td>-0.0507</td>
+<td>0.0019</td>
+<td>3.70</td>
 </tr>
 <tr>
 <th>16</th>
-<td>2</td>
 <td>Unknown 4490</td>
-<td>4489.712344</td>
-<td>2.081003</td>
-<td>0.005042</td>
-<td>0.009471</td>
-<td>4.193843</td>
-<td>1.822179</td>
-<td>-0.001273</td>
-<td>0.002130</td>
+<td>4489.700</td>
+<td>2.100</td>
+<td>0.04600</td>
+<td>0.0050</td>
+<td>0.0090</td>
+<td>190.0</td>
+<td>4.200</td>
+<td>1.800</td>
+<td>43.00</td>
+<td>-0.0013</td>
+<td>0.0021</td>
+<td>170.00</td>
 </tr>
 <tr>
 <th>17</th>
-<td>1</td>
 <td>Mg II 4481</td>
-<td>4481.302431</td>
-<td>0.175031</td>
-<td>0.134725</td>
-<td>0.028248</td>
-<td>4.853568</td>
-<td>0.491541</td>
-<td>-0.025886</td>
-<td>0.003391</td>
+<td>4481.300</td>
+<td>0.180</td>
+<td>0.00390</td>
+<td>0.1350</td>
+<td>0.0280</td>
+<td>21.0</td>
+<td>4.900</td>
+<td>0.500</td>
+<td>10.00</td>
+<td>-0.0260</td>
+<td>0.0030</td>
+<td>13.00</td>
 </tr>
 <tr>
 <th>18</th>
-<td>0</td>
 <td>He I 4471</td>
-<td>4471.767761</td>
-<td>0.021010</td>
-<td>1.013419</td>
-<td>0.030482</td>
-<td>6.803912</td>
-<td>0.126040</td>
-<td>-0.139909</td>
-<td>0.001782</td>
+<td>4471.768</td>
+<td>0.021</td>
+<td>0.00047</td>
+<td>1.0100</td>
+<td>0.0300</td>
+<td>3.0</td>
+<td>6.800</td>
+<td>0.130</td>
+<td>1.90</td>
+<td>-0.1399</td>
+<td>0.0018</td>
+<td>1.30</td>
 </tr>
 <tr>
 <th>19</th>
-<td>2</td>
 <td>He I 4388</td>
-<td>4388.934627</td>
-<td>0.032675</td>
-<td>0.425366</td>
-<td>0.030748</td>
-<td>5.738565</td>
-<td>0.286831</td>
-<td>-0.069562</td>
-<td>0.001599</td>
+<td>4388.930</td>
+<td>0.030</td>
+<td>0.00074</td>
+<td>0.4300</td>
+<td>0.0300</td>
+<td>7.2</td>
+<td>5.740</td>
+<td>0.290</td>
+<td>5.00</td>
+<td>-0.0696</td>
+<td>0.0016</td>
+<td>2.30</td>
 </tr>
 <tr>
 <th>20</th>
-<td>1</td>
 <td>O II 4349</td>
-<td>4349.884571</td>
-<td>0.023327</td>
-<td>0.445365</td>
-<td>0.012169</td>
-<td>6.061823</td>
-<td>0.150638</td>
-<td>-0.069024</td>
-<td>0.000520</td>
+<td>4349.885</td>
+<td>0.023</td>
+<td>0.00054</td>
+<td>0.4450</td>
+<td>0.0120</td>
+<td>2.7</td>
+<td>6.060</td>
+<td>0.150</td>
+<td>2.50</td>
+<td>-0.0690</td>
+<td>0.0005</td>
+<td>0.75</td>
 </tr>
 <tr>
 <th>21</th>
-<td>0</td>
 <td>H gamma</td>
-<td>4341.240915</td>
-<td>0.004624</td>
-<td>2.051301</td>
-<td>0.084824</td>
-<td>7.904604</td>
-<td>0.032090</td>
-<td>-0.214502</td>
-<td>0.002251</td>
+<td>4341.241</td>
+<td>0.005</td>
+<td>0.00011</td>
+<td>2.0500</td>
+<td>0.0800</td>
+<td>4.1</td>
+<td>7.900</td>
+<td>0.030</td>
+<td>0.41</td>
+<td>-0.2145</td>
+<td>0.0023</td>
+<td>1.00</td>
 </tr>
 <tr>
 <th>22</th>
-<td>7</td>
 <td>O II 4153</td>
-<td>4154.247316</td>
-<td>0.059818</td>
-<td>0.074066</td>
-<td>0.030435</td>
-<td>4.254787</td>
-<td>0.725635</td>
-<td>-0.015780</td>
-<td>0.003387</td>
+<td>4154.250</td>
+<td>0.060</td>
+<td>0.00140</td>
+<td>0.0700</td>
+<td>0.0300</td>
+<td>41.0</td>
+<td>4.300</td>
+<td>0.700</td>
+<td>17.00</td>
+<td>-0.0160</td>
+<td>0.0030</td>
+<td>21.00</td>
 </tr>
 <tr>
 <th>23</th>
-<td>6</td>
 <td>He I 4144</td>
-<td>4144.555500</td>
-<td>0.041671</td>
-<td>0.309808</td>
-<td>0.048086</td>
-<td>5.216811</td>
-<td>0.422512</td>
-<td>-0.055490</td>
-<td>0.003788</td>
+<td>4144.560</td>
+<td>0.040</td>
+<td>0.00100</td>
+<td>0.3100</td>
+<td>0.0500</td>
+<td>16.0</td>
+<td>5.200</td>
+<td>0.400</td>
+<td>8.10</td>
+<td>-0.0550</td>
+<td>0.0040</td>
+<td>6.80</td>
 </tr>
 <tr>
 <th>24</th>
-<td>5</td>
 <td>O II 4133</td>
-<td>4133.830691</td>
-<td>0.195127</td>
-<td>0.046456</td>
-<td>0.043709</td>
-<td>3.401280</td>
-<td>1.188803</td>
-<td>-0.010936</td>
-<td>0.005466</td>
+<td>4133.830</td>
+<td>0.200</td>
+<td>0.00470</td>
+<td>0.0500</td>
+<td>0.0400</td>
+<td>94.0</td>
+<td>3.400</td>
+<td>1.200</td>
+<td>35.00</td>
+<td>-0.0110</td>
+<td>0.0050</td>
+<td>50.00</td>
 </tr>
 <tr>
 <th>25</th>
-<td>4</td>
 <td>O II 4119</td>
-<td>4118.788055</td>
-<td>0.157553</td>
-<td>0.711412</td>
-<td>0.067968</td>
-<td>7.819360</td>
-<td>0.369004</td>
-<td>-0.085283</td>
-<td>0.004350</td>
+<td>4118.790</td>
+<td>0.160</td>
+<td>0.00380</td>
+<td>0.7100</td>
+<td>0.0700</td>
+<td>9.6</td>
+<td>7.800</td>
+<td>0.400</td>
+<td>4.70</td>
+<td>-0.0850</td>
+<td>0.0040</td>
+<td>5.10</td>
 </tr>
 <tr>
 <th>26</th>
-<td>3</td>
 <td>H delta</td>
-<td>4101.957117</td>
-<td>0.015217</td>
-<td>2.361289</td>
-<td>0.326887</td>
-<td>8.412609</td>
-<td>0.218692</td>
-<td>-0.235881</td>
-<td>0.007338</td>
+<td>4101.957</td>
+<td>0.015</td>
+<td>0.00037</td>
+<td>2.4000</td>
+<td>0.3000</td>
+<td>14.0</td>
+<td>8.410</td>
+<td>0.220</td>
+<td>2.60</td>
+<td>-0.2360</td>
+<td>0.0070</td>
+<td>3.10</td>
 </tr>
 <tr>
 <th>27</th>
-<td>2</td>
 <td>Si IV/O II 4089</td>
-<td>4089.422379</td>
-<td>0.111067</td>
-<td>0.646497</td>
-<td>0.078879</td>
-<td>6.762611</td>
-<td>0.454384</td>
-<td>-0.089474</td>
-<td>0.005267</td>
+<td>4089.420</td>
+<td>0.110</td>
+<td>0.00270</td>
+<td>0.6500</td>
+<td>0.0800</td>
+<td>12.0</td>
+<td>6.800</td>
+<td>0.500</td>
+<td>6.70</td>
+<td>-0.0890</td>
+<td>0.0050</td>
+<td>5.90</td>
 </tr>
 <tr>
 <th>28</th>
-<td>1</td>
 <td>O II 4076</td>
-<td>4075.150331</td>
-<td>1.049697</td>
-<td>0.448139</td>
-<td>0.148261</td>
-<td>7.836078</td>
-<td>1.349421</td>
-<td>-0.052381</td>
-<td>0.009073</td>
+<td>4075.200</td>
+<td>1.000</td>
+<td>0.02600</td>
+<td>0.4500</td>
+<td>0.1500</td>
+<td>33.0</td>
+<td>7.800</td>
+<td>1.300</td>
+<td>17.00</td>
+<td>-0.0520</td>
+<td>0.0090</td>
+<td>17.00</td>
 </tr>
 <tr>
 <th>29</th>
-<td>0</td>
 <td>O II 4072</td>
-<td>4070.603519</td>
-<td>0.369325</td>
-<td>0.311882</td>
-<td>0.156287</td>
-<td>5.298780</td>
-<td>1.037840</td>
-<td>-0.052893</td>
-<td>0.014596</td>
+<td>4070.600</td>
+<td>0.400</td>
+<td>0.00910</td>
+<td>0.3100</td>
+<td>0.1600</td>
+<td>50.0</td>
+<td>5.300</td>
+<td>1.000</td>
+<td>20.00</td>
+<td>-0.0530</td>
+<td>0.0150</td>
+<td>28.00</td>
 </tr>
 <tr>
 <th>30</th>
-<td>1</td>
 <td>He I 4026</td>
-<td>4026.641080</td>
-<td>0.019390</td>
-<td>0.719405</td>
-<td>0.027464</td>
-<td>5.619389</td>
-<td>0.144587</td>
-<td>-0.120241</td>
-<td>0.001473</td>
+<td>4026.641</td>
+<td>0.019</td>
+<td>0.00048</td>
+<td>0.7190</td>
+<td>0.0270</td>
+<td>3.8</td>
+<td>5.620</td>
+<td>0.140</td>
+<td>2.60</td>
+<td>-0.1202</td>
+<td>0.0015</td>
+<td>1.20</td>
 </tr>
 </tbody>
 </table>

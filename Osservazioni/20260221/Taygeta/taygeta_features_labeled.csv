@@ -1,0 +1,58 @@
+﻿short_label,rank,wavelength_A,amplitude,fwhm_A,tag,label_status,discard_reason,labels
+H-13  3734,A,3734.89,0.2389,6.06,other,confirmed,,H I 3734.4
+H-12  3750,A,3750.71,0.3569,7.79,other,confirmed,,"H I 3750.1, H I 3750.2"
+H-11  3771,A,3771.02,0.4339,9.35,other,confirmed,,"H I 3770.6, H I 3770.7"
+H-10  3798,A,3798.15,0.4736,10.36,other,confirmed,,H I 3797.9
+He I 3820,A,3819.98,0.048,4.67,other,confirmed,,He I 3819.6
+H-9  3835,A,3835.66,0.495,10.72,Balmer,confirmed,,H I 3835.4
+,A,3881.51,0.0253,5.17,other,uncertain_discarded,confirm frac too low (0.08),
+H-8  3889,A,3889.32,0.507,10.39,Balmer,confirmed,,"H I 3889.0, H I 3889.1"
+Al II 3901,A,3899.16,0.021,6.04,other,confirmed,,Al II 3900.7
+Ca II 3934,A,3931.14,0.0202,13.98,other,confirmed,,Ca II 3933.7
+He I 3965,A,3961.68,0.0338,6.32,other,confirmed,,He I 3964.7
+Hε  3970,A,3970.24,0.5192,10.78,Balmer,confirmed,,"H I 3970.0, H I 3970.1"
+,A,3979.93,0.0153,6.49,other,uncertain_discarded,confirm frac too low (0.18),
+He I 4009,A,4009.74,0.0315,4.98,other,confirmed,,He I 4009.3
+He I 4026,A,4026.45,0.103,5.83,other,confirmed,,He I 4026.2
+,A,4092.92,0.0239,7.02,other,uncertain_discarded,confirm frac too low (0.01),
+Hδ  4102,A,4101.94,0.5108,11.18,Balmer,confirmed,,"H I 4101.7, H I 4101.8"
+,A,4110.5,0.0135,3.86,other,uncertain_discarded,confirm frac too low (0.10),
+Si II 4128,A,4126.36,0.0251,15.45,other,confirmed,,Si II 4128.1
+He I 4144,A,4144.29,0.0444,4.76,other,confirmed,,He I 4143.8
+Fe II 4173,A,4173.02,0.0137,10.93,other,confirmed,,Fe II 4173.4
+Fe II 4233,A,4233.78,0.014,4.55,other,confirmed,,Fe II 4233.2
+C II 4267,A,4267.53,0.0179,4.56,other,confirmed,,"C II 4267.3, C II 4267.0"
+,A,4331.47,0.0243,7.31,other,uncertain_discarded,confirm frac too low (0.14),
+Hγ  4340,A,4340.84,0.4923,11.21,Balmer,confirmed,,"H I 4340.4, H I 4340.5"
+Fe II 4352,A,4351.19,0.0269,7.01,other,confirmed,,Fe II 4351.8
+He I 4388,A,4388.31,0.056,6.7,other,confirmed,,He I 4387.9
+He I 4471,A,4471.85,0.0857,6.19,other,confirmed,,He I 4471.5
+Mg II 4481,A,4481.54,0.0579,5.65,other,confirmed,,"Mg II 4481.1, Mg II 4481.3"
+Fe II 4549,A,4552.34,0.0114,8.76,other,confirmed,,Fe II 4549.5
+Fe II 4584,A,4583.24,0.0128,11.93,other,confirmed,,Fe II 4583.8
+Fe II 4629,A,4629.08,0.0085,12.35,other,confirmed,,Fe II 4629.3
+He I 4713,A,4713.92,0.0145,4.36,other,confirmed,,"He I 4713.1, He I 4713.2"
+,A,4851.22,0.0197,10.08,other,uncertain_discarded,confirm frac too low (0.23),
+,A,4853.35,0.0075,6.41,other,uncertain_discarded,confirm frac too low (0.05),
+Hβ  4861,A,4861.86,0.4442,11.89,Balmer,confirmed,,"H I 4861.3, H I 4861.4"
+,A,4872.29,0.018,10.7,other,uncertain_discarded,confirm frac too low (0.03),
+He I 4922,A,4922.89,0.0531,6.45,other,confirmed,,He I 4921.9
+He I 5016,A,5017.53,0.0257,6.69,other,confirmed,,He I 5015.7
+Si II 5041,A,5036.97,0.0102,48.84,other,confirmed,,Si II 5041.0
+Si II 5056,A,5057.23,0.0213,5.33,other,confirmed,,"Si II 5056.0, Si II 5056.3"
+Fe II 5169,A,5170.21,0.0089,7.79,other,confirmed,,Fe II 5169.0
+Fe II 5317,A,5318.29,0.013,6.39,other,confirmed,,Fe II 5316.6
+Fe II 5366,A,5368.12,0.0086,16.63,other,confirmed,,Fe II 5366.2
+S II 5640,A,5640.71,0.0093,7.81,other,confirmed,,"S II 5640.0, S II 5640.4"
+He I 5876,A,5877.09,0.0402,8.72,other,confirmed,,He I 5875.6
+,A,5894.45,0.0405,17.23,other,uncertain_discarded,confirm frac too low (0.08),
+,A,5919.74,0.0238,12.94,other,uncertain_discarded,confirm frac too low (0.01),
+,A,5947.39,0.0196,44.41,other,uncertain_discarded,confirm frac too low (0.10),
+O I 6158,A,6159.02,0.0115,6.53,other,confirmed,,O I 6158.2
+,A,6280.15,0.0559,8.27,other,uncertain_discarded,confirm frac too low (0.00),
+Si II 6347,A,6348.65,0.028,6.05,other,confirmed,,Si II 6347.1
+Si II 6371,A,6373.3,0.018,4.85,other,confirmed,,Si II 6371.4
+,A,6482.58,0.0133,55.58,other,uncertain_discarded,confirm frac too low (0.11),
+,A,6517.49,0.0263,7.78,other,uncertain_discarded,confirm frac too low (0.04),
+Hα  6563,A,6564.32,0.3076,12.38,Balmer,confirmed,,"H I 6562.9, H I 6562.7"
+He I 6678,A,6679.72,0.0282,6.95,other,confirmed,,He I 6678.1
